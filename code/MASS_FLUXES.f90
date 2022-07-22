@@ -2,8 +2,9 @@
 ! This module contains all the Mass Flux functions for UlMO
 !**********************************************************
 module MASS_FLUX
-use READ_DATA
-use WRITE_DATA
+
+use WRITE_READ_DATA
+use DEGREE_TO_RADIAN
 use NAMELIST
 implicit none
 public :: calculate_flow_sv_THETA  , calculate_mass_flux_THETA, calculate_mass_flux_PHI, calculate_flow_sv_PHI
@@ -49,25 +50,12 @@ function calculate_surface_stress_THETA() result(tau_THETA)
 
 end function calculate_surface_stress_THETA
 !*********************************************
-! Function convert angle in degrees to radians
-!*********************************************
-function deg_to_rad(angle) result(ans)
-    real*8, intent(in) :: angle
-    real*8 :: ans
-
-
-    ans = angle*pi/180
-
-end function deg_to_rad
-!*********************************************
 ! Function to calculate the Coriolis parameter
 !*********************************************
-function calculate_coriolis_parameter(theta) result(f_out)
+function calculate_coriolis_parameter(theta_deg) result(f_out)
     real*8 :: f_out
-    real*8, intent(in):: theta
-
-    f_out = 2*OMEGA*sin(deg_to_rad(theta))
-
+    real*8, intent(in)  :: theta_deg
+    f_out = 2*OMEGA*sin(deg_to_rad(theta_deg))
 
 end function calculate_coriolis_parameter
 !*************************************************************************************
@@ -188,4 +176,5 @@ function calculate_flow_sv_THETA() result(sv_flow_THETA)
 
 end function calculate_flow_sv_THETA
 
-end module
+
+end module MASS_FLUX

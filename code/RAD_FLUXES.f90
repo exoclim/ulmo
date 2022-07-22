@@ -1,10 +1,11 @@
-!
-!
-!
+!! This module has not been tested yet !!
+!***************************************************************
+! This module contains all the radiation flux functions for ULMO
+!***************************************************************
 module RAD_FLUXES
 use NAMELIST
-use READ_DATA
-use WRITE_DATA
+use WRITE_READ_DATA
+use DEGREE_TO_RADIAN
 implicit none
 public :: calc_Q_flux
 private
@@ -37,7 +38,5 @@ function calc_Q_flux(T_surf) result(upward_Q_flux)
 
 
 end function calc_Q_flux
-
-
 
 end module RAD_FLUXES

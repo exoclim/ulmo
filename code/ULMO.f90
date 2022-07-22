@@ -1,8 +1,7 @@
 
 program ULMO
     use MASS_FLUX
-    use READ_DATA
-    use WRITE_DATA
+    use WRITE_READ_DATA
     use NAMELIST
 implicit none
 !*******************

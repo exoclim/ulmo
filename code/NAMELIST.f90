@@ -72,4 +72,4 @@ private
   character(len=*),parameter,public  :: OUTPUT_Y_MASS_FLUX_DATA = "output_data/ProCb/northward_flow_"
   character(len=*),parameter,public  :: OUTPUT_VERITCAL_FLUX_DATA = "output_data/ProCb/vertical_mass_flux_"
   character(len=*),parameter,public  :: OUTPUT_DATA_EXT = "_days.dat"
-end module
+end module NAMELIST

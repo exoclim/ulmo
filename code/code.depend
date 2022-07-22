@@ -1,0 +1,37 @@
+# depslib dependency file v1.0
+1658134306 source:c:\users\oakle\ocean\code\file_read.f90
+
+1658150036 source:c:\users\oakle\ocean\code\import_data.f90
+
+1658235756 source:c:\users\oakle\ocean\code\main.f90
+
+1658222120 source:c:\users\oakle\ocean\code\maths_test.f90
+
+1658328176 source:c:\users\oakle\ocean\code\math.f90
+
+1658221923 source:c:\users\oakle\ocean\code\read_write_um.f90
+
+1658499468 source:c:\users\oakle\ocean\code\read_data.f90
+
+1658499625 source:c:\users\oakle\ocean\code\ulmo.f90
+
+1658498113 source:c:\users\oakle\ocean\code\namelist.f90
+
+1658422714 source:c:\users\oakle\ocean\code\mass_flux.f90
+
+1658499481 source:c:\users\oakle\ocean\code\write_data.f90
+
+1658502004 source:c:\users\oakle\ocean\code\mass_fluxes.f90
+
+1658499968 source:c:\users\oakle\ocean\code\rad_fluxes.f90
+
+1658499281 source:c:\users\oakle\ocean\code\degree_to_radian.f90
+
+1658503856 source:c:\users\oakle\ocean\code\da_da.f90
+
+1658500372 source:c:\users\oakle\ocean\code\calculus.f90
+
+1658499558 source:c:\users\oakle\ocean\code\write_read_data.f90
+
+1658503791 source:c:\users\oakle\ocean\code\div_m.f90
+
