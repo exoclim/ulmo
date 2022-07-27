@@ -58,6 +58,9 @@
 		<Unit filename="WRITE_READ_DATA.f90">
 			<Option weight="1" />
 		</Unit>
+		<Unit filename="construct_space.f90">
+			<Option weight="2" />
+		</Unit>
 		<Unit filename="dA_da.f90">
 			<Option weight="3" />
 		</Unit>
