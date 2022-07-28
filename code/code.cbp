@@ -31,20 +31,23 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="CONSTRUCT_SPACE.f90">
+			<Option weight="0" />
+		</Unit>
 		<Unit filename="DEGREE_TO_RADIAN.f90">
 			<Option weight="1" />
 		</Unit>
 		<Unit filename="DIV_M.f90">
-			<Option weight="4" />
+			<Option weight="6" />
 		</Unit>
 		<Unit filename="HEIGHT_OF_SLAB.f90">
 			<Option weight="1" />
 		</Unit>
 		<Unit filename="MASS_FLUXES.f90">
-			<Option weight="2" />
+			<Option weight="4" />
 		</Unit>
 		<Unit filename="MATRIX_CALC.f90">
-			<Option weight="5" />
+			<Option weight="7" />
 		</Unit>
 		<Unit filename="NAMELIST.f90">
 			<Option weight="0" />
@@ -52,17 +55,20 @@
 		<Unit filename="RAD_FLUXES.f90">
 			<Option weight="2" />
 		</Unit>
-		<Unit filename="ULMO.f90">
+		<Unit filename="TIME_STEP.f90">
+			<Option weight="4" />
+		</Unit>
+		<Unit filename="TRANSPORT.f90">
 			<Option weight="3" />
+		</Unit>
+		<Unit filename="ULMO.f90">
+			<Option weight="5" />
 		</Unit>
 		<Unit filename="WRITE_READ_DATA.f90">
 			<Option weight="1" />
 		</Unit>
-		<Unit filename="construct_space.f90">
-			<Option weight="2" />
-		</Unit>
 		<Unit filename="dA_da.f90">
-			<Option weight="3" />
+			<Option weight="5" />
 		</Unit>
 		<Unit filename="multiplication_output.dat" />
 		<Unit filename="surface_temperature.dat" />

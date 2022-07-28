@@ -2,7 +2,7 @@
 ! This module contains all the Mass Flux functions for UlMO
 !**********************************************************
 module MASS_FLUX
-
+use TRANSPORT
 use WRITE_READ_DATA
 use DEGREE_TO_RADIAN
 use NAMELIST
@@ -175,6 +175,7 @@ function calculate_flow_sv_THETA() result(sv_flow_THETA)
     end do
 
 end function calculate_flow_sv_THETA
+
 
 
 end module MASS_FLUX
