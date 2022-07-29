@@ -5,42 +5,42 @@ module NAMELIST
 implicit none
 private
 
-
 !********************
 !Planetary constants
 !********************
-  real*8, parameter,public :: C_D = 0.0013 ! drag coefficient, dimensionless
-  real*8, parameter,public :: C_V = 4000.0 ! specific heat capacity of water J/kg/K
-  real*8, parameter,public :: EMISSIVITY = 0.985 ! effective blackbody emissivity of ocean water
-  real*8, parameter,public  :: HEAT_TRANSFER_COEFFICIENT = 3000. ! heat transfer coefficient for water W/m2/K 50-3000
-  real*8, parameter,public  :: RHO_AIR =  1.22 ! air density kg/m3
-  real*8, parameter,public  :: RHO_WATER =  1027 ! km/m3
-  real*8, parameter,public  :: R_PLANET = 1.12384*6.371e6 ! radius of planet in m (as fraction of Earth radius)
-  real*8, parameter,public  :: EPSILON = 0.00001 ! pretty good need to find appropriate value
-  real*8, parameter,public  :: OMEGA = 6.501e-6 ! angular frequency planet, about its central axis
+  real, parameter,public :: C_D = 0.0013 ! drag coefficient, dimensionless
+  real, parameter,public :: C_V = 4000.0 ! specific heat capacity of water J/kg/K
+  real, parameter,public :: EMISSIVITY = 0.985 ! effective blackbody emissivity of ocean water
+  real, parameter,public  :: HEAT_TRANSFER_COEFFICIENT = 3000. ! heat transfer coefficient for water W/m2/K 50-3000
+  real, parameter,public  :: RHO_AIR =  1.22 ! air density kg/m3
+  real, parameter,public  :: RHO_WATER =  1027 ! km/m3
+  real, parameter,public  :: R_PLANET = 1.12384*6.371e6 ! radius of planet in m (as fraction of Earth radius)
+  real, parameter,public  :: EPSILON = 0.00001 ! pretty good need to find appropriate value
+  real, parameter,public  :: OMEGA = 6.501e-6 ! angular frequency planet, about its central axis
 !  real, parameter,public  :: OMEGA = 7.272e-5 ! Earth value for omega
-  real*8, parameter,public  :: SIGMA = 5.67e-8 ! stefan boltzman constant
-  real*8, parameter,public  :: H_S = 50.0 ! thickness of surface layer in m
-  real*8, parameter,public  :: H_D = 150.0 ! thickness of deep layer below
-  real*8, parameter,public  :: D = 25000.0 ! horizontal diffusion coefficient m2/s
+  real, parameter,public  :: SIGMA = 5.67e-8 ! stefan boltzman constant
+  real, parameter,public  :: H_S = 50.0 ! thickness of surface layer in m
+  real, parameter,public  :: H_D = 150.0 ! thickness of deep layer below
+  real, parameter,public  :: D = 25000.0 ! horizontal diffusion coefficient m2/s
   integer, parameter,public  :: N_LATS = 90 ! number of latitude points
   integer, parameter,public  :: N_LONS = 144 ! number of longitude points
-  real*8, parameter,public  :: LAT_MIN = -89.0
-  real*8, parameter,public  :: DELTA_LAT = 2.0
-  real*8, parameter,public  :: LON_MIN = 1.25
-  real*8, parameter,public  :: DELTA_LON = 2.5
-  real*8, parameter,public  :: HOURS_PER_DAY = 24.
-  real*8, parameter,public  :: MINUTES_PER_HOUR = 60.
-  real*8, parameter,public  :: SECONDS_PER_MINUTE = 60.
-  real*8, parameter,public  :: DELTA_T = 12.0*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! time step of 1 hours
-  integer, parameter,public  :: TIME_STEPS = 20000*2 ! for time step of 12 hours, 20,000 time steps needed for 10,000 day run
-  real*8, parameter,public  :: TIME_OUTPUT_FREQ = 25.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! print update frequency in seconds, but first term is number of days
-  real*8, parameter,public  :: DATA_OUTPUT_FREQ = 100.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! output frequency in seconds, but first term is number of days
-  real*8, parameter,public  :: TIME_OUTPUT_TOL = 1e-6 ! days
-  real*8, parameter,public  :: T_OFFSET = 0.0 ! IF you want to restart run, specify start time here, so it doesn't save over stuff, and change input temp files to output ones
-  real*8, parameter,public  :: TOL = 1e-6
-  real*8, parameter,public  :: MAX_ITER = 100
-  real*8, parameter,public  :: pi = 4*atan(1.)
+  real, parameter,public  :: LAT_MIN = -89.0
+  real, parameter,public  :: DELTA_LAT = 2.0
+  real, parameter,public  :: LON_MIN = 1.25
+  real, parameter,public  :: DELTA_LON = 2.5
+  real, parameter,public  :: HOURS_PER_DAY = 24.
+  real, parameter,public  :: MINUTES_PER_HOUR = 60.
+  real, parameter,public  :: SECONDS_PER_MINUTE = 60.
+  real, parameter,public  :: DELTA_T = 12.0*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! time step of 1 hours
+  !integer, parameter,public  :: TIME_STEPS = 20000*2 ! for time step of 12 hours, 20,000 time steps needed for 10,000 day run
+  integer, parameter,public  :: TIME_STEPS = 10*2
+  real, parameter,public  :: TIME_OUTPUT_FREQ = 25.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! print update frequency in seconds, but first term is number of days
+  real, parameter,public  :: DATA_OUTPUT_FREQ = 100.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! output frequency in seconds, but first term is number of days
+  real, parameter,public  :: TIME_OUTPUT_TOL = 1e-6 ! days
+  real, parameter,public  :: T_OFFSET = 0.0 ! IF you want to restart run, specify start time here, so it doesn't save over stuff, and change input temp files to output ones
+  real, parameter,public  :: TOL = 1e-6
+  real, parameter,public  :: MAX_ITER = 100
+  real, parameter,public  :: pi = 4*atan(1.)
 !***********************
 ! input data file names
 !***********************

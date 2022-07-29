@@ -2,7 +2,6 @@
 ! This module contains all the Mass Flux functions for UlMO
 !**********************************************************
 module MASS_FLUX
-use TRANSPORT
 use WRITE_READ_DATA
 use DEGREE_TO_RADIAN
 use NAMELIST
@@ -15,8 +14,8 @@ contains
 ! Function to calculate the surface stress in PHI direction
 !**********************************************************
 function calculate_surface_stress_PHI() result(tau_PHI)
-     real*8, dimension(n_lats,n_lons) :: u_wind
-     real*8, dimension(n_lats,n_lons) :: tau_PHI
+     real, dimension(n_lats,n_lons) :: u_wind
+     real, dimension(n_lats,n_lons) :: tau_PHI
      integer :: i,j
 
      u_wind = read_file(U_WIND_DATA,N_LATS,N_LONS)
@@ -35,8 +34,8 @@ end function calculate_surface_stress_PHI
 ! Function to calculate the surface stress in THETA direction
 !************************************************************
 function calculate_surface_stress_THETA() result(tau_THETA)
-     real*8, dimension(n_lats,n_lons) :: v_wind
-     real*8, dimension(n_lats,n_lons) :: tau_THETA
+     real, dimension(n_lats,n_lons) :: v_wind
+     real, dimension(n_lats,n_lons) :: tau_THETA
      integer :: i,j
 
      v_wind = read_file(V_WIND_DATA,N_LATS,N_LONS)
@@ -53,8 +52,8 @@ end function calculate_surface_stress_THETA
 ! Function to calculate the Coriolis parameter
 !*********************************************
 function calculate_coriolis_parameter(theta_deg) result(f_out)
-    real*8 :: f_out
-    real*8, intent(in)  :: theta_deg
+    real :: f_out
+    real, intent(in)  :: theta_deg
     f_out = 2*OMEGA*sin(deg_to_rad(theta_deg))
 
 end function calculate_coriolis_parameter
@@ -63,13 +62,13 @@ end function calculate_coriolis_parameter
 !*************************************************************************************
 function calculate_mass_flux_THETA() result(mass_flux_THETA)
     integer :: i,j
-    real*8, dimension(N_LATS,N_LONS) :: tau_PHI
-    real*8, dimension(N_LATS,N_LONS) :: tau_THETA
-    real*8, dimension(N_LATS,N_lONS) :: mass_flux_THETA
-    real*8, dimension(N_LATS,1)      :: f
-    real*8, dimension(N_LATS,1)      :: lats
-    real*8, dimension(N_LATS,2)      :: lats_data_file
-    real*8, dimension(N_LATS,N_LONS) :: land_mask
+    real, dimension(N_LATS,N_LONS) :: tau_PHI
+    real, dimension(N_LATS,N_LONS) :: tau_THETA
+    real, dimension(N_LATS,N_lONS) :: mass_flux_THETA
+    real, dimension(N_LATS,1)      :: f
+    real, dimension(N_LATS,1)      :: lats
+    real, dimension(N_LATS,2)      :: lats_data_file
+    real, dimension(N_LATS,N_LONS) :: land_mask
 
 
     tau_PHI = calculate_surface_stress_PHI()
@@ -100,13 +99,13 @@ end function calculate_mass_flux_THETA
 
 function calculate_mass_flux_PHI() result(mass_flux_PHI)
     integer :: i,j
-    real*8, dimension(N_LATS,N_LONS) :: tau_PHI
-    real*8, dimension(N_LATS,N_LONS) :: tau_THETA
-    real*8, dimension(N_LATS,N_lONS) :: mass_flux_PHI
-    real*8, dimension(N_LATS,1)      :: f
-    real*8, dimension(N_LATS,1)      :: lats
-    real*8, dimension(N_LATS,2)      :: lats_data_file
-    real*8, dimension(N_LATS,N_LONS) :: land_mask
+    real, dimension(N_LATS,N_LONS) :: tau_PHI
+    real, dimension(N_LATS,N_LONS) :: tau_THETA
+    real, dimension(N_LATS,N_lONS) :: mass_flux_PHI
+    real, dimension(N_LATS,1)      :: f
+    real, dimension(N_LATS,1)      :: lats
+    real, dimension(N_LATS,2)      :: lats_data_file
+    real, dimension(N_LATS,N_LONS) :: land_mask
 
 
     tau_PHI = calculate_surface_stress_PHI()
@@ -138,8 +137,8 @@ end function calculate_mass_flux_PHI
 !!****************************************************************************
 function calculate_flow_sv_PHI() result(sv_flow_PHI)
     integer :: i,j
-    real*8, dimension(N_LATS,N_lONS) :: mass_flux_PHI
-    real*8, dimension(N_LATS,N_lONS) :: sv_flow_PHI
+    real, dimension(N_LATS,N_lONS) :: mass_flux_PHI
+    real, dimension(N_LATS,N_lONS) :: sv_flow_PHI
 
     mass_flux_PHI = calculate_mass_flux_PHI()
 
@@ -154,11 +153,11 @@ end function calculate_flow_sv_PHI
 
 function calculate_flow_sv_THETA() result(sv_flow_THETA)
     integer :: i,j
-    real*8, dimension(N_LATS,2)      :: lats_data_file
-    real*8, dimension(N_LATS,1)      ::  lats
-    real*8, dimension(N_LATS,1)      :: theta
-    real*8, dimension(N_LATS,N_lONS) :: mass_flux_THETA
-    real*8, dimension(N_LATS,N_lONS) :: sv_flow_THETA
+    real, dimension(N_LATS,2)      :: lats_data_file
+    real, dimension(N_LATS,1)      ::  lats
+    real, dimension(N_LATS,1)      :: theta
+    real, dimension(N_LATS,N_lONS) :: mass_flux_THETA
+    real, dimension(N_LATS,N_lONS) :: sv_flow_THETA
 
 
     lats_data_file = read_file(LATS_FILE,N_LATS,2)

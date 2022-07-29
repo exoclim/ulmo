@@ -11,7 +11,7 @@ contains
 !***********************************************
 subroutine write_file(file_name,array,rows, cols)
     integer, intent(in) :: rows, cols
-    real*8, intent(in),dimension(rows,cols) :: array
+    real, intent(in),dimension(rows,cols) :: array
     integer :: i,j,iu
     character(len=*), intent(in) :: file_name
 
@@ -29,11 +29,12 @@ end subroutine write_file
 !**************************
 ! function to read in data
 !**************************
-function read_file(data_file,rows,cols) result(output)
+function read_file(data_file,rows,cols) result(array)
     character(len=*), intent(in) :: data_file
-    real*8, dimension(rows,cols) :: output
-    real*8, dimension(rows,cols) :: array
     integer, intent(in) :: rows,cols
+
+    real, dimension(rows,cols) :: array
+
     integer :: lat,lon,iu
 
 
@@ -44,7 +45,7 @@ function read_file(data_file,rows,cols) result(output)
 
     end do
     close(iu)
-    output = array
+
 !    print*,data_file,'(1,1)', output(1,1) !!check!!
 
 end function read_file

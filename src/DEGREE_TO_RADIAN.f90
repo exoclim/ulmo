@@ -12,8 +12,8 @@ contains
 ! Function convert angle in degrees to radians
 !*********************************************
 function deg_to_rad(angle) result(ans)
-    real*8, intent(in) :: angle
-    real*8 :: ans
+    real, intent(in) :: angle
+    real :: ans
     ans = angle*pi/180
 end function deg_to_rad
 
