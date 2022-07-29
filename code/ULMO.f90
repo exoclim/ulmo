@@ -31,9 +31,9 @@ implicit none
 !call write_file('mass_flux_Theta.dat',mass_flux_THETA,N_LATS,N_LONS)
 
 ! TESTING THE TRASNPORT AND TIME STEPPER WITH NO DEEP OCEAN !
-
-call temp_after_time_step(N_STEPS=1000)
-
+print"(a,i5)", 'Running Program...'
+call temp_after_time_step(N_STEPS=TIME_STEPS) ! Time_steps value is specified in NAMELIST.f90 file
+print"(a,i5)", 'Finished!'
 end program ULMO
 
 

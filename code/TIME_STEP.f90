@@ -28,7 +28,9 @@ subroutine temp_after_time_step(N_STEPS)
     integer, intent(in):: N_STEPS
     real*8, dimension(N_LATS,N_LONS) :: output
     output = time_stepper(N_STEPS)
+
     call write_file('surf_temp_out.dat',output,N_LATS,N_LONS)
+
 
 end subroutine
 

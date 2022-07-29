@@ -16,6 +16,7 @@ subroutine write_file(file_name,array,rows, cols)
     character(len=*), intent(in) :: file_name
 
     open(newunit=iu, file = file_name, status = 'replace', action='write')
+    print "(a,i5)", 'Writing output...'
     do i = 1,rows
         write(iu,*) (array(i,j),j=1,cols)
     end do

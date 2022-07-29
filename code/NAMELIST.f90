@@ -33,7 +33,7 @@ private
   real*8, parameter,public  :: MINUTES_PER_HOUR = 60.
   real*8, parameter,public  :: SECONDS_PER_MINUTE = 60.
   real*8, parameter,public  :: DELTA_T = 12.0*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! time step of 1 hours
-  real*8, parameter,public  :: TIME_STEPS = 20000*2 ! for time step of 12 hours, 20,000 time steps needed for 10,000 day run
+  integer, parameter,public  :: TIME_STEPS = 20000*2 ! for time step of 12 hours, 20,000 time steps needed for 10,000 day run
   real*8, parameter,public  :: TIME_OUTPUT_FREQ = 25.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! print update frequency in seconds, but first term is number of days
   real*8, parameter,public  :: DATA_OUTPUT_FREQ = 100.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! output frequency in seconds, but first term is number of days
   real*8, parameter,public  :: TIME_OUTPUT_TOL = 1e-6 ! days
