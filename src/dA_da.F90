@@ -5,7 +5,6 @@ module dA_da
 use DEGREE_TO_RADIAN
 use NAMELIST
 use WRITE_READ_DATA
-use MASS_FLUX
 implicit none
 public :: dA_d_theta, dA_d_phi
 private

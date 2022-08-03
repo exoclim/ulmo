@@ -65,7 +65,7 @@ subroutine calculate_matrix()
                 ! central point - check if land
                 if (land_mask(i,j) == 1) then
                     Aii=1
-                    !gsl_spmatrix_set(A,i,i,Aii)
+                    !fgsl_spmatrix_set(A,i,i,Aii)
                     cycle
                 end if
                 ! define mass flux for ekman terms
@@ -73,7 +73,7 @@ subroutine calculate_matrix()
                 ! central point !
                 Aii = 1
                 ! if statements for with transport versions
-                !gsl_spmatrix_set(A,i,i,Aii)
+                !fgsl_spmatrix_set(A,i,i,Aii)
                 ! if statements for with transport versions !
 
             end do
@@ -90,9 +90,6 @@ subroutine calculate_vector_b(T,land_mask)
     real, dimension(N_LATS,N_LONS) :: F_a,F_c
     real :: b_hij,depth
     integer :: h, N_DEPTHS,i ,j,SURFACE,DEEP
-
-
-
 
     SURFACE = 1 ! position in 3D temperatures array (1,:,:)
     DEEP = 2    ! position in 3D temperatures array (2,:,:)
@@ -118,7 +115,7 @@ subroutine calculate_vector_b(T,land_mask)
                     end if
 
                 end if
-                !gsl_vector_set(b,(h*N_LATS*N_LONS+(i*N_LONS+j)),b_hij)
+                !fgsl_vector_set(b,(h*N_LATS*N_LONS+(i*N_LONS+j)),b_hij)
             end do
         end do
     end do
@@ -128,14 +125,22 @@ end subroutine
 subroutine calculate_new_T(T,land_mask)
     integer :: n, N_DEPTHS
     real, dimension(N_LATS,N_LONS), intent(in) :: T, land_mask
+    real:: tol
 
     n = N_DEPTHS*n_lats*N_LONS
 !    gsl_spmatrix *A = gsl_spmatrix_alloc(n,n)
 !    gsl_spmatrix *C
 !    gsl_vector *b = gsl_vector_alloc(n)
 !    gsl_vector *x = gsl_vector_alloc(n)
-    call calculate_matrix()
-    call calculate_vector_b(T,land_mask)
+!    call calculate_matrix()
+!    call calculate_vector_b(T,land_mask)
+!    C = fgsl_spmatrix_ccs(A)
+
+    ! now solve the system with the GMRES iterative solver
+    tol = TOL
+
+
+
 
 end subroutine
 end module MATRIX_CALC

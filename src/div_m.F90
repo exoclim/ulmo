@@ -3,10 +3,11 @@
 !
 module DIV_M
 use NAMELIST
-use MASS_FLUX
+
 use DEGREE_TO_RADIAN
 use WRITE_READ_DATA
 use dA_da
+use MASS_FLUX
 implicit none
 public :: calculate_div_M
 private

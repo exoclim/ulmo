@@ -9,7 +9,7 @@ private
 contains
 function h_slab(h) result(ans)
     integer :: h
-    real*8 :: ans
+    real :: ans
     if (h == 1) then !using index 1 for surface
         ans = H_S
     elseif (h == 0) then !using index 0 for deep
