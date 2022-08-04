@@ -6,6 +6,7 @@ use DIV_M
 use dA_da
 use WRITE_READ_DATA
 use Other_FLUXES
+use fgsl
 implicit none
 public :: calculate_matrix_index,calculate_new_lon,calculate_matrix,calculate_new_T,calculate_vector_b
 private
@@ -90,6 +91,7 @@ subroutine calculate_vector_b(T,land_mask)
     real, dimension(N_LATS,N_LONS) :: F_a,F_c
     real :: b_hij,depth
     integer :: h, N_DEPTHS,i ,j,SURFACE,DEEP
+    real, dimension(N_LATS,1) :: b
 
     SURFACE = 1 ! position in 3D temperatures array (1,:,:)
     DEEP = 2    ! position in 3D temperatures array (2,:,:)
@@ -98,6 +100,7 @@ subroutine calculate_vector_b(T,land_mask)
 
     F_a = calculate_F_a()
     F_c = calculate_F_c(T)
+    N_DEPTHS = 2
 
 
     do h = 1, N_DEPTHS
@@ -115,7 +118,7 @@ subroutine calculate_vector_b(T,land_mask)
                     end if
 
                 end if
-                !fgsl_vector_set(b,(h*N_LATS*N_LONS+(i*N_LONS+j)),b_hij)
+                b =  fgsl_vector_init(b,(h*N_LATS*N_LONS+(i*N_LONS+j)),b_hij)
             end do
         end do
     end do
@@ -128,10 +131,10 @@ subroutine calculate_new_T(T,land_mask)
     real:: tol
 
     n = N_DEPTHS*n_lats*N_LONS
-!    gsl_spmatrix *A = gsl_spmatrix_alloc(n,n)
-!    gsl_spmatrix *C
-!    gsl_vector *b = gsl_vector_alloc(n)
-!    gsl_vector *x = gsl_vector_alloc(n)
+!    fgsl_spmatrix *A = fgsl_spmatrix_alloc(n,n)
+!    fgsl_spmatrix *C
+!    fgsl_vector *b = fgsl_vector_alloc(n)
+!    fgsl_vector *x = fgsl_vector_alloc(n)
 !    call calculate_matrix()
 !    call calculate_vector_b(T,land_mask)
 !    C = fgsl_spmatrix_ccs(A)

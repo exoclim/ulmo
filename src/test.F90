@@ -1,3 +1,0 @@
-PROGRAM foo
-  USE fgsl
-END PROGRAM foo
