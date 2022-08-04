@@ -4,6 +4,7 @@ program ULMO
     use WRITE_READ_DATA
     use NAMELIST
     use MATRIX_CALC
+    !use fgsl
 implicit none
 !*********************
 !! ULMO MAIN SCRIPT !!

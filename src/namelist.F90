@@ -41,6 +41,7 @@ private
   real, parameter,public  :: TOL = 1e-6
   real, parameter,public  :: MAX_ITER = 100
   real, parameter,public  :: pi = 4*atan(1.)
+  integer,parameter,public :: N_DEPTHS = 2 ! 1 deep and 1 surface layer
 !***********************
 ! input data file names
 !***********************

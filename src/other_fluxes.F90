@@ -13,14 +13,11 @@ contains
 !
 !
 !
-function calc_Q_flux(T_surf) result(upward_Q_flux)
-    real, dimension(N_LATS,N_LONS) :: F_net_sw_down
-    real, dimension(N_LATS,N_LONS) :: F_lw_down
-    real, dimension(N_LATS,N_LONS) :: F_latent_up
-    real, dimension(N_LATS,N_LONS) :: F_sensible_up
-    real, dimension(N_LATS,N_LONS) :: upward_Q_flux
-    real, dimension(N_LATS,N_LONS), intent(in) :: T_surf
+function calc_Q_flux(T) result(upward_Q_flux)
+    real, dimension(N_LATS,N_LONS) :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up,upward_Q_flux
+    real, dimension(2,N_LATS,N_LONS), intent(in) :: T
     integer :: i,j
+
 
     F_net_sw_down = read_file(SW_FLUX_NET_DOWN_DATA,N_LATS,N_LONS)
     F_lw_down     = read_file(LW_FLUX_DOWN_DATA,N_LATS,N_LONS)
@@ -30,7 +27,7 @@ function calc_Q_flux(T_surf) result(upward_Q_flux)
     do i = 1,N_LATS
         do j = 1, N_LONS
             upward_Q_flux(i,j) = F_latent_up(i,j)+F_sensible_up(i,j) &
-            + EMISSIVITY*SIGMA*T_surf(i,j)**4 - (F_net_sw_down(i,j)+F_lw_down(i,j))
+            + EMISSIVITY*SIGMA*T(1,i,j)**4 - (F_net_sw_down(i,j)+F_lw_down(i,j))
         end do
     end do
 
