@@ -1,0 +1,16 @@
+prefix=/home/conda/feedstock_root/build_artifacts/fgsl_1631130907215/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeh
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/fgsl
+fc_compiler=/home/conda/feedstock_root/build_artifacts/fgsl_1631130907215/_build_env/bin/x86_64-conda-linux-gnu-gfortran
+gsl_version=2.6
+
+Name: fgsl
+Description: Fortran bindings for the GNU Scientific Library
+Version: 1.5.0
+Requires: gsl >= 2.6
+Conflicts:
+Libs: -L${libdir} -lfgsl
+Cflags: -I${includedir}
+
+

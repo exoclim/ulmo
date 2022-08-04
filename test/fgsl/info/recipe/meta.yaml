@@ -1,0 +1,82 @@
+# This file created by conda-build 3.21.4
+# meta.yaml template originally from:
+# /home/conda/recipe_root, last modified Wed Sep  8 19:54:16 2021
+# ------------------------------------------------
+
+package:
+  name: fgsl
+  version: 1.5.0
+source:
+  sha256: 5013b4e000e556daac8b3c83192adfe8f36ffdc91d1d4baf0b1cb3100260e664
+  url: https://github.com/reinh-bader/fgsl/archive/1.5.0.tar.gz
+build:
+  number: '1'
+  string: hc432613_1
+requirements:
+  build:
+    - _libgcc_mutex 0.1 conda_forge
+    - _openmp_mutex 4.5 1_gnu
+    - autoconf 2.69 pl5320h36c2ea0_10
+    - automake 1.16.2 pl5320ha770c72_3
+    - binutils_impl_linux-64 2.36.1 h193b22a_2
+    - binutils_linux-64 2.36 hf3e587d_1
+    - gcc_impl_linux-64 9.4.0 h03d3576_8
+    - gcc_linux-64 9.4.0 h391b98a_1
+    - gettext 0.19.8.1 h73d1719_1006
+    - gfortran_impl_linux-64 9.4.0 h0003116_8
+    - gfortran_linux-64 9.4.0 hf0ab688_1
+    - gnuconfig 2020.11.07 hd8ed1ab_0
+    - kernel-headers_linux-64 2.6.32 he073ed8_14
+    - ld_impl_linux-64 2.36.1 hea4e1c9_2
+    - libffi 3.4.2 h9c3ff4c_1
+    - libgcc-devel_linux-64 9.4.0 hd854feb_8
+    - libgcc-ng 11.1.0 hc902ee8_8
+    - libgfortran5 11.1.0 h6c583b3_8
+    - libgomp 11.1.0 hc902ee8_8
+    - libsanitizer 9.4.0 h79bfe98_8
+    - libstdcxx-ng 11.1.0 h56837e0_8
+    - libtool 2.4.6 h58526e2_1007
+    - m4 1.4.18 h516909a_1001
+    - make 4.3 hd18ef5c_1
+    - perl 5.32.1 0_h7f98852_perl5
+    - pkg-config 0.29.2 h36c2ea0_1008
+    - sysroot_linux-64 2.12 he073ed8_14
+  host:
+    - _libgcc_mutex 0.1 conda_forge
+    - _openmp_mutex 4.5 1_gnu
+    - gsl 2.6 he838d99_2
+    - libblas 3.8.0 11_h86c2bf4_netlib
+    - libcblas 3.8.0 11_h86c2bf4_netlib
+    - libgcc-ng 11.1.0 hc902ee8_8
+    - libgfortran-ng 11.1.0 h69a702a_8
+    - libgfortran5 11.1.0 h6c583b3_8
+    - libgomp 11.1.0 hc902ee8_8
+  run:
+    - gsl ==2.6
+    - gsl >=2.6,<2.7.0a0
+    - libblas >=3.8.0,<4.0a0
+    - libcblas >=3.8.0,<4.0a0
+    - libgcc-ng >=9.4.0
+    - libgfortran-ng
+    - libgfortran5 >=9.4.0
+test:
+  commands:
+    - test -f $PREFIX/lib/libfgsl$SHLIB_EXT
+about:
+  description: 'A portable, object-based Fortran interface to the GNU scientific
+
+    library a collection of numerical routines for scientific computing.
+
+    '
+  dev_url: https://github.com/reinh-bader/fgsl
+  doc_url: https://doku.lrz.de/display/PUBLIC/FGSL+-+A+Fortran+interface+to+the+GNU+Scientific+Library
+  home: https://doku.lrz.de/display/PUBLIC/FGSL+-+A+Fortran+interface+to+the+GNU+Scientific+Library
+  license: GPL-2.0-only
+  license_family: GPL
+  license_file: LICENSE
+  summary: Fortran interface to the GNU Scientific Library
+extra:
+  copy_test_source_files: true
+  final: true
+  recipe-maintainers:
+    - hhslepicka
