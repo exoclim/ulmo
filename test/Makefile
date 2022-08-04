@@ -1,5 +1,5 @@
 FC=gfortran #fortran compiler
-FFLAGS=-O3 -Wall -Wextra -std=f2008 -lgsl -lgslcblas
+FFLAGS=-O3 -Wall -Wextra -std=f2008 -lgsl -lgslcblas -lm
 SRC=./test_fgsl.F90
 OBJ=${SRC:/src/.f90=.o} #substitute .f90 with .o
 
