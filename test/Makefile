@@ -1,5 +1,5 @@
 FC=gfortran #fortran compiler
-FFLAGS=-O3 -Wall -Wextra -std=f2008 #optimization (for level 3) flags, compiler warnings and the strictest adherence to the latest standards
+FFLAGS=-O3 -Wall -Wextra -std=f2008 -lgsl -lgslcblas  #optimization (for level 3) flags, compiler warnings and the strictest adherence to the latest standards
 SRC=./test_fgsl.F90
 OBJ=${SRC:/src/.f90=.o} #substitute .f90 with .o
 
