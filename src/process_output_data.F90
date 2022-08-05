@@ -6,6 +6,7 @@ module process_output_data
  use Other_FLUXES
  use MASS_FLUX
  use DIV_M
+ use, intrinsic :: iso_fortran_env
  implicit none
  public :: process_output
  private
@@ -22,9 +23,9 @@ end function
 ! Subroutine that writes output data to unique file name including time stamp
 !****************************************************************************
 subroutine write_file_time(base,time_str,array,rows,cols)
-    integer, intent(in) :: rows, cols
-    real, intent(in),dimension(rows,cols) :: array
-    integer :: i,j,iu
+    integer(int64), intent(in) :: rows, cols
+    real(real64), intent(in),dimension(rows,cols) :: array
+    integer(int64) :: i,j,iu
     character(len=100), intent(in) :: base,time_str
     character(len=100) :: file_name
 
@@ -45,7 +46,7 @@ end subroutine write_file_time
 ! Function that converts a integer to a string
 !*********************************************
 function int_to_str(k) result(str)
-    integer, intent(in) :: k
+    integer(int64), intent(in) :: k
     character(len=100) :: str
     write(str, *) k
     str = adjustl(str)
@@ -55,12 +56,12 @@ function int_to_str(k) result(str)
 !**********************************************************
  subroutine process_output(T,M,time)
 
-    real,dimension(2,N_LATS,N_LONS),intent(in) :: T,M
-    real,dimension(2,N_LATS,N_LONS) :: Sv_flow
-    real,dimension(N_LATS,N_LONS) :: upward_Q_flux,Sv_flow_PHI,Sv_flow_THETA,div_M
-    real, intent(in) :: time
-    real :: days
-    integer :: day_int, i , j
+    real(real64),dimension(2,N_LATS,N_LONS),intent(in) :: T,M
+    real(real64),dimension(2,N_LATS,N_LONS) :: Sv_flow
+    real(real64),dimension(N_LATS,N_LONS) :: upward_Q_flux,Sv_flow_PHI,Sv_flow_THETA,div_M
+    real(real64), intent(in) :: time
+    real(real64) :: days
+    integer(int64) :: day_int, i , j
     character(len=100) :: time_str
 
     days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)

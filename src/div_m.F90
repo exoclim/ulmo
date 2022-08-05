@@ -3,11 +3,11 @@
 !
 module DIV_M
 use NAMELIST
-
 use DEGREE_TO_RADIAN
 use READ_DATA
 use dA_da
 use MASS_FLUX
+use, intrinsic :: iso_fortran_env
 implicit none
 public :: calculate_div_M
 private
@@ -17,13 +17,15 @@ contains
 ! there is an up or downward flow between the ocean layers
 !************************************************************************************
 function calculate_div_M(i,j) result(div_M)
-    real :: theta, div_M , dM_phi_dphi ,dM_theta_dtheta
-    real, dimension(N_LATS,2) :: lats_data_file
-    real ::  lat
-    integer, intent(in) :: i,j
-    real, dimension(N_LATS,N_LONS) :: M_Theta ,M_Phi
+    real(real64) :: theta, div_M , dM_phi_dphi ,dM_theta_dtheta
+    real(real64), dimension(N_LATS,2) :: lats_data_file
+    real(real64) ::  lat
+    integer(int64), intent(in) :: i,j
+    real(real64), dimension(N_LATS,N_LONS) :: M_Theta ,M_Phi
+    integer(int64) :: col_num
 
-    lats_data_file = read_file(LATS_FILE,N_LATS,2)
+    col_num = 2 ! match int64 data type
+    lats_data_file = read_file(LATS_FILE,N_LATS,col_num)
     lat = lats_data_file(i,2) ! Second column in lats data file includes the latitude points
 
     theta = deg_to_rad(lat)

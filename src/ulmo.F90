@@ -5,14 +5,15 @@ program ULMO
     use NAMELIST
     use MATRIX_CALC
     use process_output_data
-    !use fgsl
+!    use fgsl
+    use, intrinsic :: iso_fortran_env
 implicit none
 !*********************
 !! ULMO MAIN SCRIPT !!
 !*********************
-real, dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_flux_PHI,sv_mass_flux_PHI,sv_mass_flux_THETA
-real,dimension(2,N_LATS,N_LONS) :: T, M
-real,dimension(N_LATS,1) :: b
+real(real64), dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_flux_PHI,sv_mass_flux_PHI,sv_mass_flux_THETA
+real(real64),dimension(2,N_LATS,N_LONS) :: T, M
+real(real64),dimension(N_LATS,1) :: b
 character(len=100) :: a
 
 ! COMBINING T_SURF AND T_DEEP INTO ONE 3D ARRAY FOR EASIER ANALYSIS !
@@ -32,10 +33,10 @@ M(1,:,:) = mass_flux_THETA
 M(2,:,:) = mass_flux_PHI
 
 !!! Writing mass flux outputs to files !!
-!call write_file('output_data/sv_mass_flux_Phi.dat',sv_mass_flux_Phi,N_LATS,N_LONS)
-!call write_file('output_data/mass_flux_PHI.dat',mass_flux_PHI,N_LATS,N_LONS)
-!call write_file('output_data/sv_mass_flux_Theta.dat',sv_mass_flux_THETA,N_LATS,N_LONS)
-!call write_file('output_data/mass_flux_Theta.dat',mass_flux_THETA,N_LATS,N_LONS)
+call write_file('output_data/sv_mass_flux_Phi.dat',sv_mass_flux_Phi,N_LATS,N_LONS)
+call write_file('output_data/mass_flux_PHI.dat',mass_flux_PHI,N_LATS,N_LONS)
+call write_file('output_data/sv_mass_flux_Theta.dat',sv_mass_flux_THETA,N_LATS,N_LONS)
+call write_file('output_data/mass_flux_Theta.dat',mass_flux_THETA,N_LATS,N_LONS)
 
 !!! TESTING THE TRASNPORT AND TIME STEPPER WITH NO DEEP OCEAN !!!
 !print"(a,i5)", 'Running Program...'

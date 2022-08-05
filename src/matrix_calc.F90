@@ -8,6 +8,7 @@ use READ_DATA
 use Other_FLUXES
 use MASS_FLUX
 !use fgsl
+use, intrinsic :: iso_fortran_env
 implicit none
 public :: calculate_matrix_index,calculate_new_lon,calculate_matrix,calculate_new_T,calculate_vector_b
 private
@@ -19,8 +20,8 @@ contains
 ! Calculates the index for the matrix used in the solver, before being compressed
 !********************************************************************************
 function calculate_matrix_index(lon,lat,height) result(ans)
-    integer, intent(in) :: lon,lat,height
-    integer :: ans
+    integer(int64), intent(in) :: lon,lat,height
+    integer(int64) :: ans
 
     ans = height*N_LATS*N_LONS+lat*N_LONS+lon
 end function
@@ -29,8 +30,8 @@ end function
 ! but at the new longitudinal point (from lon to new_lon)
 !**************************************************************************************
 function calculate_new_lon(lon) result(new_lon)
-    integer, intent(in) :: lon
-    integer :: new_lon
+    integer(int64), intent(in) :: lon
+    integer(int64) :: new_lon
 
     new_lon = lon+N_LONS/2
     if (new_lon>=N_LONS) then
@@ -42,15 +43,19 @@ end function calculate_new_lon
 ! version determines whether the matrix is calculated for a no horizontal transport model, diffusion only model or the full Ekman model.
 !**************************************************************************************************************************************
 subroutine calculate_matrix()
-    real ::d_theta, d_phi, s_dfsn, s_ekman,thickness,Aij, Aii
-    real, dimension(N_LATS,N_LONS) :: dM_theta_dtheta,dM_phi_dphi,M_theta,M_phi,div_M,land_mask
-    real, dimension(N_LATS,2)      :: lats_data_file
-    real, dimension(N_LATS,1)      ::  lats,theta
-    integer:: height,SURFACE,DEEP,lat,lon,N_DEPTHS,i,j
+    real(real64) ::d_theta, d_phi, s_dfsn, s_ekman,thickness,Aij, Aii
+    real(real64), dimension(N_LATS,N_LONS) :: dM_theta_dtheta,dM_phi_dphi,M_theta,M_phi,div_M
+    real(real64), dimension(N_LATS,2)      :: lats_data_file
+    real(real64), dimension(N_LATS,1)      ::  lats,theta
+!    type(fgsl_spmatrix) :: A
+    integer(int64):: height,SURFACE,DEEP,lat,lon,N_DEPTHS,i,j,col_num
+    integer(int64), dimension(N_LATS,N_LONS) :: land_mask
     SURFACE = 1
     DEEP = 2
 
-    lats_data_file = read_file(LATS_FILE,N_LATS,2)
+    col_num = 2 ! match int64 data type
+
+    lats_data_file = read_file(LATS_FILE,N_LATS,col_num)
     lats(:,1)= lats_data_file(:,2)
 
     d_theta = deg_to_rad(DELTA_LAT)
@@ -65,17 +70,17 @@ subroutine calculate_matrix()
                 Aii = 0.0
                 i = calculate_matrix_index(lat,lon,height)
                 ! central point - check if land
-                if (land_mask(i,j) == 1) then
+                !if (land_mask(i,j) == 1) then
                     Aii=1
-                    !fgsl_spmatrix_set(A,i,i,Aii)
+                !    A = fgsl_spmatrix_set(A,i,i,Aii)
                     cycle
-                end if
+                !end if
                 ! define mass flux for ekman terms
                 Aij = 0.0
                 ! central point !
                 Aii = 1
                 ! if statements for with transport versions
-                !fgsl_spmatrix_set(A,i,i,Aii)
+                !A = fgsl_spmatrix_set(A,i,i,Aii)
                 ! if statements for with transport versions !
 
             end do
@@ -87,12 +92,12 @@ end subroutine
 ! to ensure an energy exchange between the layers. 1.0/(RHO_WATER*C_V*H_S) prefactor converts a flux in W/m2 to K/s
 !**********************************************************************************************************************
 subroutine calculate_vector_b(T,land_mask)
-    real,dimension(2,N_LATS,N_LONS),intent(in) :: T
-    real, dimension(N_LATS,N_LONS), intent(in) :: land_mask
-    real, dimension(N_LATS,N_LONS) :: F_a,F_c
-    real :: b_hij,depth
-    integer :: h, N_DEPTHS,i ,j,SURFACE,DEEP
-    real, dimension(N_LATS,1) :: b
+    real(real64),dimension(2,N_LATS,N_LONS),intent(in) :: T
+    real(real64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
+    real(real64), dimension(N_LATS,N_LONS) :: F_a,F_c
+    real(real64) :: b_hij,depth
+    integer(int64) :: h, N_DEPTHS,i ,j,SURFACE,DEEP
+    real(real64), dimension(N_LATS,1) :: b
 
     SURFACE = 1 ! position in 3D temperatures array (1,:,:)
     DEEP = 2    ! position in 3D temperatures array (2,:,:)
@@ -127,10 +132,10 @@ subroutine calculate_vector_b(T,land_mask)
 end subroutine
 
 subroutine calculate_new_T(T,land_mask)
-    integer :: n, N_DEPTHS
-    real, dimension(N_LATS,N_LONS), intent(in) :: T, land_mask
-    real:: tol, max_iter, residual
-    integer :: h,i,j
+    integer(int64) :: n, N_DEPTHS
+    real(real64), dimension(N_LATS,N_LONS), intent(in) :: T, land_mask
+    real(real64):: tol, max_iter, residual
+    integer(int64) :: h,i,j
 !
 !    n = N_DEPTHS*n_lats*N_LONS
 !    fgsl_spmatrix *A = fgsl_spmatrix_alloc(n,n)
@@ -180,11 +185,11 @@ subroutine calculate_new_T(T,land_mask)
 end subroutine
 
 subroutine time_stepper(n_times,version,T,M,land_mask)
-    integer, dimension(N_LATS,N_LONS), intent(in) :: land_mask
-    real, dimension(2,N_LATS,N_LONS),intent(in) :: T,M
-    integer, intent(in) :: n_times, version
-    real :: time, days
-    integer :: ti
+    integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
+    real(int64), dimension(2,N_LATS,N_LONS),intent(in) :: T,M
+    integer(int64), intent(in) :: n_times, version
+    real(real64) :: time, days
+    integer(int64) :: ti
 
     !Grid_vals *grid = xmalloc(sizeof(Grid_vals)) I think thi is unique to c
     ! need construct grid statement

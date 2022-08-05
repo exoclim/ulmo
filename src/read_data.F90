@@ -1,10 +1,11 @@
 module READ_DATA
 use NAMELIST
+use, intrinsic :: iso_fortran_env
 implicit none
 !********************************************************************
 ! This module also contains the original subroutine for writing files
 !********************************************************************
-public :: read_file
+public :: read_file, write_file
 private
 
 contains
@@ -13,11 +14,9 @@ contains
 !**************************
 function read_file(data_file,rows,cols) result(array)
     character(len=*), intent(in) :: data_file
-    integer, intent(in) :: rows,cols
-
-    real, dimension(rows,cols) :: array
-
-    integer :: lat,lon,iu
+    integer(int64), intent(in) :: rows,cols
+    real(real64), dimension(rows,cols) :: array
+    integer(int64) :: lat,lon,iu
 
 
 
@@ -35,9 +34,9 @@ end function read_file
 ! Subroutine to write output arrays to data file (old/not used)
 !**************************************************************
 subroutine write_file(file_name,array,rows, cols)
-    integer, intent(in) :: rows, cols
-    real, intent(in),dimension(rows,cols) :: array
-    integer :: i,j,iu
+    integer(int64), intent(in) :: rows, cols
+    real(real64), intent(in),dimension(rows,cols) :: array
+    integer(int64) :: i,j,iu
     character(len=*), intent(in) :: file_name
 
     open(newunit=iu, file = file_name, status = 'replace', action='write')

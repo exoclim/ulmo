@@ -6,6 +6,7 @@ module Other_FLUXES
 use NAMELIST
 use READ_DATA
 use DEGREE_TO_RADIAN
+use, intrinsic :: iso_fortran_env
 implicit none
 public :: calc_Q_flux, calculate_F_c, calculate_F_a
 private
@@ -14,9 +15,9 @@ contains
 !
 !
 function calc_Q_flux(T) result(upward_Q_flux)
-    real, dimension(N_LATS,N_LONS) :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up,upward_Q_flux
-    real, dimension(2,N_LATS,N_LONS), intent(in) :: T
-    integer :: i,j
+    real(real64), dimension(N_LATS,N_LONS) :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up,upward_Q_flux
+    real(real64), dimension(2,N_LATS,N_LONS), intent(in) :: T
+    integer(int64) :: i,j
 
 
     F_net_sw_down = read_file(SW_FLUX_NET_DOWN_DATA,N_LATS,N_LONS)
@@ -40,8 +41,8 @@ end function calc_Q_flux
 ! from the incident)and incoming lw flux from atmospheric emission
 !************************************************************************************************
 function calculate_F_a() result(F_a)
-    real, dimension(N_LATS,N_LONS) :: F_a, F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up
-    integer :: i,j
+    real(real64), dimension(N_LATS,N_LONS) :: F_a, F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up
+    integer(int64) :: i,j
 
     F_net_sw_down = read_file(SW_FLUX_NET_DOWN_DATA,N_LATS,N_LONS)
     F_lw_down = read_file(LW_FLUX_DOWN_DATA,N_LATS,N_LONS)
@@ -59,8 +60,8 @@ end function
 !***************************************************************************
 function calculate_F_c(T) result(F_c)
     integer :: i,j
-    real, dimension(N_LATS,N_LONS):: F_c
-    real, dimension(2,N_LATS,N_LONS), intent(in) :: T
+    real(real64), dimension(N_LATS,N_LONS):: F_c
+    real(real64), dimension(2,N_LATS,N_LONS), intent(in) :: T
     ! h = 1 surface
     ! h = 2 deep
     do i=1,N_LATS

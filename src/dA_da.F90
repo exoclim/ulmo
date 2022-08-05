@@ -5,6 +5,7 @@ module dA_da
 use DEGREE_TO_RADIAN
 use NAMELIST
 use READ_DATA
+use, intrinsic :: iso_fortran_env
 implicit none
 public :: dA_d_theta, dA_d_phi
 private
@@ -19,10 +20,10 @@ contains
 ! at the same latitude.
 function dA_d_theta(A,i,j) result(ans)
 
-    integer, intent(in) :: i,j
-    real :: d_theta, ans
-    integer :: j_temp
-    real, dimension(N_LATS,N_LONS), intent(in) :: A
+    integer(int64), intent(in) :: i,j
+    real(real64) :: d_theta, ans
+    integer(int64) :: j_temp
+    real(real64), dimension(N_LATS,N_LONS), intent(in) :: A
 
     d_theta = deg_to_rad(DELTA_LON)
 
@@ -47,10 +48,10 @@ end function dA_d_theta
 
 function dA_d_phi(A,i,j) result(ans)
 
-    real :: d_phi, ans
-    integer, intent(in) :: i,j
-    integer :: j_temp
-    real, dimension(N_LATS,N_LONS), intent(in) :: A
+    real(real64) :: d_phi, ans
+    integer(int64), intent(in) :: i,j
+    integer(int64) :: j_temp
+    real(real64), dimension(N_LATS,N_LONS), intent(in) :: A
 
     d_phi = deg_to_rad(DELTA_LON)
 
