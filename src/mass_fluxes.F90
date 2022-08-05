@@ -2,7 +2,7 @@
 ! This module contains all the Mass Flux functions for UlMO
 !**********************************************************
 module MASS_FLUX
-use WRITE_READ_DATA
+use READ_DATA
 use DEGREE_TO_RADIAN
 use NAMELIST
 implicit none

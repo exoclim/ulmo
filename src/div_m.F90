@@ -5,7 +5,7 @@ module DIV_M
 use NAMELIST
 
 use DEGREE_TO_RADIAN
-use WRITE_READ_DATA
+use READ_DATA
 use dA_da
 use MASS_FLUX
 implicit none

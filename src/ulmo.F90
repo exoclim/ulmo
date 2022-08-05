@@ -1,9 +1,10 @@
 
 program ULMO
     use MASS_FLUX
-    use WRITE_READ_DATA
+    use READ_DATA
     use NAMELIST
     use MATRIX_CALC
+    use process_output_data
     !use fgsl
 implicit none
 !*********************
@@ -12,6 +13,7 @@ implicit none
 real, dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_flux_PHI,sv_mass_flux_PHI,sv_mass_flux_THETA
 real,dimension(2,N_LATS,N_LONS) :: T, M
 real,dimension(N_LATS,1) :: b
+character(len=100) :: a
 
 ! COMBINING T_SURF AND T_DEEP INTO ONE 3D ARRAY FOR EASIER ANALYSIS !
 T_surf= read_file(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)

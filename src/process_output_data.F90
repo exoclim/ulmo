@@ -1,39 +1,81 @@
+!**********************************************************
+! This module processes the output data and writes to files
+!**********************************************************
 module process_output_data
  use NAMELIST
  use Other_FLUXES
  use MASS_FLUX
  use DIV_M
- use WRITE_READ_DATA
  implicit none
  public :: process_output
  private
  contains
+!********************************************************************
+! Function constructs output file name from base name and output time
+!********************************************************************
+function construct_fname(base,time_str) result(fname)
+    character(len=100) :: fname
+    character(len=100), intent(in) :: base,time_str
+    fname = base//trim(time_str)//OUTPUT_DATA_EXT
+end function
+!****************************************************************************
+! Subroutine that writes output data to unique file name including time stamp
+!****************************************************************************
+subroutine write_file_time(base,time_str,array,rows,cols)
+    integer, intent(in) :: rows, cols
+    real, intent(in),dimension(rows,cols) :: array
+    integer :: i,j,iu
+    character(len=100), intent(in) :: base,time_str
+    character(len=100) :: file_name
 
+    file_name = construct_fname(base,time_str)
+
+    open(newunit=iu, file = file_name, status = 'replace', action='write')
+    print "(a,i5)", 'Writing output...'
+    do i = 1,rows
+        write(iu,*) (array(i,j),j=1,cols)
+    end do
+
+    close(iu)
+
+
+
+end subroutine write_file_time
+!*********************************************
+! Function that converts a integer to a string
+!*********************************************
+function int_to_str(k) result(str)
+    integer, intent(in) :: k
+    character(len=100) :: str
+    write(str, *) k
+    str = adjustl(str)
+ end function
+!**********************************************************
+! Subroutine to Process the output data for each time stamp
+!**********************************************************
  subroutine process_output(T,M,time)
-    !
-    ! need to add time string to write file
-    !
+
     real,dimension(2,N_LATS,N_LONS),intent(in) :: T,M
     real,dimension(2,N_LATS,N_LONS) :: Sv_flow
     real,dimension(N_LATS,N_LONS) :: upward_Q_flux,Sv_flow_PHI,Sv_flow_THETA,div_M
     real, intent(in) :: time
     real :: days
     integer :: day_int, i , j
-    character(len=10) :: time_str
+    character(len=100) :: time_str
 
     days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
     days = nint(days) ! rounding to nearest integer from real
     print*,"Data outputted at %lg\n",days
     day_int = days+TIME_OUTPUT_TOL
-    print*,time_str,"%d",day_int
+    time_str = int_to_str(day_int)
 
     upward_Q_flux = calc_Q_flux(T)
-    call write_file(OUTPUT_UPWARD_Q_FLUX,upward_Q_flux,N_LATS,N_LONS)
+    call write_file_time(OUTPUT_UPWARD_Q_FLUX,time_str,upward_Q_flux,N_LATS,N_LONS)
 
     Sv_flow_PHI = calculate_flow_sv_PHI()
     Sv_flow_THETA = calculate_flow_sv_THETA()
-    call write_file(OUTPUT_X_MASS_FLUX_DATA,Sv_flow_PHI,N_LATS,N_LONS)
-    call write_file(OUTPUT_Y_MASS_FLUX_DATA,Sv_flow_THETA,N_LATS,N_LONS)
+    call write_file_time(OUTPUT_X_MASS_FLUX_DATA,time_str,Sv_flow_PHI,N_LATS,N_LONS)
+    call write_file_time(OUTPUT_Y_MASS_FLUX_DATA,time_str,Sv_flow_THETA,N_LATS,N_LONS)
 
     do i = 1,N_LATS
         do j = 1,N_LONS
@@ -41,13 +83,10 @@ module process_output_data
         end do
     end do
 
-    call write_file(OUTPUT_VERITCAL_FLUX_DATA,div_M,N_LATS,N_LONS)
+    call write_file_time(OUTPUT_VERITCAL_FLUX_DATA,time_str,div_M,N_LATS,N_LONS)
 
-    call write_file(OUTPUT_SURFACE_TEMP_DATA,T(1,N_LATS,N_LONS),N_LATS,N_LONS)
-    call write_file(OUTPUT_DEEP_TEMP_DATA,T(2,N_LATS,N_LONS),N_LATS,N_LONS)
-
-
-
+    call write_file_time(OUTPUT_SURFACE_TEMP_DATA,time_str,T(1,N_LATS,N_LONS),N_LATS,N_LONS)
+    call write_file_time(OUTPUT_DEEP_TEMP_DATA,time_str,T(2,N_LATS,N_LONS),N_LATS,N_LONS)
 
 
  end subroutine

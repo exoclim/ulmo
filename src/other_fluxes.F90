@@ -4,7 +4,7 @@
 !***************************************************************
 module Other_FLUXES
 use NAMELIST
-use WRITE_READ_DATA
+use READ_DATA
 use DEGREE_TO_RADIAN
 implicit none
 public :: calc_Q_flux, calculate_F_c, calculate_F_a

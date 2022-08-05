@@ -12,7 +12,7 @@ function h_slab(h) result(ans)
     real :: ans
     if (h == 1) then !using index 1 for surface
         ans = H_S
-    elseif (h == 0) then !using index 0 for deep
+    elseif (h == 2) then ! using index 2 for deep
         ans = H_D
     else
         print "(a)",'Index for depth is out of range'
