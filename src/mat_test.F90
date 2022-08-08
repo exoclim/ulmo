@@ -5,10 +5,12 @@ module mat_test
 use NAMELIST
 use DEGREE_TO_RADIAN
 use READ_DATA
+use Other_FLUXES
+use HEIGHT_OF_SLAB
 use :: fgsl
 use, intrinsic :: iso_fortran_env
 implicit none
-public :: calculate_matrix
+public :: calculate_matrix, calculate_vector_b
 private
 
 
@@ -44,69 +46,100 @@ end function calculate_new_lon
 subroutine calculate_matrix(lat,lon,height)
   ! NO TRANSPORT !
   type(fgsl_spmatrix) :: A
-  type(fgsl_file) :: stdout
-  integer(fgsl_size_t) :: i, j,p,q
+  integer(fgsl_size_t) :: mat_index
   integer(fgsl_int) :: status
-  real(fgsl_double) ::Aij, Aii
+  real(fgsl_double) :: Aij, Aii
   integer(int64), intent(in):: lat,lon,height
 
   ! matrix size = 144x90x2+90x144+144 = 39024 (height*N_LATS*N_LONS+lat*N_LONS+lon)
   A = fgsl_spmatrix_alloc(39024_fgsl_size_t, 39024_fgsl_size_t)
-  i = calculate_matrix_index(lat,lon,height)
+  mat_index = calculate_matrix_index(lat,lon,height)
   Aii = 1 ! no transport makes all diagonal components 1
 
   ! build the sparse matrix
-  status = fgsl_spmatrix_set(A, i, i, Aii)
+  status = fgsl_spmatrix_set(A, mat_index, mat_index, Aii)
 
   ! writing matrix output to check !
   write(output_unit, '(A)') 'printing all matrix elements:'
-  write(*,*) 'A(',i,',',i,') = ',fgsl_spmatrix_get(A, i, i)
+  write(*,*) 'A(',mat_index,',',mat_index,') = ',fgsl_spmatrix_get(A, mat_index, mat_index)
 
 end subroutine calculate_matrix
+
+
 
 !**********************************************************************************************************************
 ! calculates and sets the vector b in matrix Ax=b. EMISSIVITY*SIGMA*T^4 is a blackbody emission from one of the layers,
 ! to ensure an energy exchange between the layers. 1.0/(RHO_WATER*C_V*H_S) prefactor converts a flux in W/m2 to K/s
 !**********************************************************************************************************************
-!subroutine calculate_vector_b(T,land_mask)
-!    real(real64),dimension(2,N_LATS,N_LONS),intent(in) :: T
-!    real(real64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
-!    real(real64), dimension(N_LATS,N_LONS) :: F_a,F_c
-!    real(real64) :: b_hij,depth
-!    integer(int64) :: h, N_DEPTHS,i ,j,SURFACE,DEEP
-!    real(real64), dimension(N_LATS,1) :: b
-!
-!    SURFACE = 1 ! position in 3D temperatures array (1,:,:)
-!    DEEP = 2    ! position in 3D temperatures array (2,:,:)
-!
-!    b_hij = 0.0
-!
-!    F_a = calculate_F_a()
-!    F_c = calculate_F_c(T)
-!
-!
-!
-!    do h = 1, N_DEPTHS
-!        do i = 1,N_LATS
-!            do j = 1,N_LONS
+subroutine calculate_vector_b(T)!,land_mask)
+    real(real64),dimension(2,N_LATS,N_LONS),intent(in) :: T
+    !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
+    real(real64), dimension(N_LATS,N_LONS) :: F_a,F_c
+    real(real64) :: depth
+    integer(int64) :: h, N_DEPTHS,i ,j,SURFACE,DEEP
+    ! fgsl !
+    real(fgsl_double) :: b_hij
+
+    integer(fgsl_size_t), parameter :: ndim = 39024
+    real(fgsl_double), target :: v(ndim)
+
+    integer(fgsl_size_t) :: vec_index
+
+    integer(fgsl_int) :: p
+
+    real(fgsl_double), pointer :: p_vec(:),p_slice(:)
+    type(fgsl_vector) :: B,slice
+
+    SURFACE = 1 ! position in 3D temperatures array (1,:,:)
+    DEEP = 2    ! position in 3D temperatures array (2,:,:)
+
+    b_hij = 0.0
+
+    F_a = calculate_F_a()
+    F_c = calculate_F_c(T)
+
+
+
+    do h = 1, N_DEPTHS
+        do i = 1,N_LATS
+            do j = 1,N_LONS
 !                if (land_mask(i,j) == 1) then
 !                    b_hij = T(h,i,j)
 !                else
-!                    depth=h_slab(h)
-!                    if (h==SURFACE) then
-!                        b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(i,j)+F_a(i,j)-EMISSIVITY*SIGMA*(T(SURFACE,i,j))**4)*T(h,i,j)
-!                    else
-!                        b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(-F_c(i,j)+T(h,i,j))
-!
-!                    end if
-!
-!                end if
-!                !fgsl_vector_init(b,(h*N_LATS*N_LONS+(i*N_LONS+j)),b_hij)
-!            end do
-!        end do
-!    end do
-!
-!end subroutine
+                    depth=h_slab(h)
+                    if (h==SURFACE) then
+                        b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(i,j)+F_a(i,j)-EMISSIVITY*SIGMA*(T(SURFACE,i,j))**4)*T(h,i,j)
+                    else
+                        b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(-F_c(i,j)+T(h,i,j))
+
+                    end if
+
+                !end if
+
+                vec_index = calculate_matrix_index(i,j,h)
+                v(p) =  (/ (b_hij, vec_index) /) ! literally no idea why this does not work
+                B = fgsl_vector_init(v)
+
+
+
+
+
+
+            end do
+        end do
+    end do
+
+    write(*,*) v(1)
+
+! This works !
+!    v(1:ndim) =  (/ (dble(p)+0.1_fgsl_double, p=1,ndim) /)
+!    B = fgsl_vector_init(v)
+!    write(*,*) v(3::3)
+!    call fgsl_vector_free(B)
+
+
+
+end subroutine
 !
 !subroutine calculate_new_T(T,land_mask)
 !    integer(int64) :: n, N_DEPTHS
@@ -186,5 +219,29 @@ end subroutine calculate_matrix
 !
 !end subroutine
 !
+!subroutine test
+!
+!  integer(fgsl_size_t), parameter :: ndim = 12
+!  integer(fgsl_int), target :: v(ndim)
+!  integer(fgsl_int), pointer :: p_slice(:), p_vec(:)
+!  integer(fgsl_int) :: i, status
+!  type(fgsl_vector_int) :: vec, slice
+!
+!  v(1:ndim) = [ (i, i=1,ndim) ]
+!  slice = fgsl_vector_init(v(3:), stride=3_fgsl_size_t)
+!  vec = fgsl_vector_init(v)
+!  p_slice => fgsl_vector_to_fptr(slice)
+!  p_vec => fgsl_vector_to_fptr(vec)
+!  write(*, '(''Size of slice pointer is: '',i3)') size(p_slice)
+!  write(*, '(''Size of complete pointer is: '',i3)') size(p_vec)
+!  write(*, '(''Components: '',4i4)') p_slice(1:size(p_slice))
+!  write(*, '(''Should be : '',4i4)') v(3::3)
+!  v(6) = v(6) + 1
+!  write(*, '(''Increase value of 2nd element of slice: '',2i4)') &
+!       p_slice(2), p_vec(6)
+!  call fgsl_vector_free(slice)
+!  call fgsl_vector_free(vec)
+!
+!end subroutine test
 
 end module mat_test

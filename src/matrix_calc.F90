@@ -44,23 +44,22 @@ end function calculate_new_lon
 subroutine calculate_matrix(lat,lon,height)
   ! NO TRANSPORT !
   type(fgsl_spmatrix) :: A
-  type(fgsl_file) :: stdout
-  integer(fgsl_size_t) :: i, j,p,q
+  integer(fgsl_size_t) :: mat_index
   integer(fgsl_int) :: status
-  real(fgsl_double) ::Aij, Aii
+  real(fgsl_double) :: Aii
   integer(int64), intent(in):: lat,lon,height
 
   ! matrix size = 144x90x2+90x144+144 = 39024 (height*N_LATS*N_LONS+lat*N_LONS+lon)
   A = fgsl_spmatrix_alloc(39024_fgsl_size_t, 39024_fgsl_size_t)
-  i = calculate_matrix_index(lat,lon,height)
+  mat_index = calculate_matrix_index(lat,lon,height)
   Aii = 1 ! no transport makes all diagonal components 1
 
   ! build the sparse matrix
-  status = fgsl_spmatrix_set(A, i, i, Aii)
+  status = fgsl_spmatrix_set(A, mat_index, mat_index, Aii)
 
   ! writing matrix output to check !
   write(output_unit, '(A)') 'printing all matrix elements:'
-  write(*,*) 'A(',i,',',i,') = ',fgsl_spmatrix_get(A, i, i)
+  write(*,*) 'A(',mat_index,',',mat_index,') = ',fgsl_spmatrix_get(A, mat_index, mat_index)
 
 end subroutine calculate_matrix
 
