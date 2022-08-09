@@ -7,7 +7,7 @@ use DEGREE_TO_RADIAN
 use READ_DATA
 use Other_FLUXES
 use HEIGHT_OF_SLAB
-use :: fgsl
+use fgsl
 use, intrinsic :: iso_fortran_env
 implicit none
 public :: calculate_matrix, calculate_vector_b
@@ -79,16 +79,10 @@ subroutine calculate_vector_b(T)!,land_mask)
     integer(int64) :: h, N_DEPTHS,i ,j,SURFACE,DEEP
     ! fgsl !
     real(fgsl_double) :: b_hij
-
     integer(fgsl_size_t), parameter :: ndim = 39024
     real(fgsl_double), target :: v(ndim)
-
-    integer(fgsl_size_t) :: vec_index
-
-    integer(fgsl_int) :: p
-
-    real(fgsl_double), pointer :: p_vec(:),p_slice(:)
-    type(fgsl_vector) :: B,slice
+    integer(fgsl_size_t) :: vec_index, size_vec
+    type(fgsl_vector) :: B
 
     SURFACE = 1 ! position in 3D temperatures array (1,:,:)
     DEEP = 2    ! position in 3D temperatures array (2,:,:)
@@ -115,29 +109,25 @@ subroutine calculate_vector_b(T)!,land_mask)
                     end if
 
                 !end if
-
                 vec_index = calculate_matrix_index(i,j,h)
-                v(p) =  (/ (b_hij, vec_index) /) ! literally no idea why this does not work
-                B = fgsl_vector_init(v)
-
-
-
-
-
-
+                v(vec_index) =  b_hij
             end do
         end do
     end do
+B = fgsl_vector_init(v)
+size_vec =  fgsl_vector_get_size(B)
+write(*,*) 'element 1 =',v(1)
 
-    write(*,*) v(1)
 
 ! This works !
-!    v(1:ndim) =  (/ (dble(p)+0.1_fgsl_double, p=1,ndim) /)
-!    B = fgsl_vector_init(v)
-!    write(*,*) v(3::3)
-!    call fgsl_vector_free(B)
-
-
+!integer(fgsl_int) :: p
+!integer(fgsl_size_t), parameter :: ndim = 12
+!v(1:ndim) =  (/ (dble(p)+0.1_fgsl_double, p=1,ndim) /)
+!B = fgsl_vector_init(v)
+!write(*,*) v(3::3)
+!call fgsl_vector_free(B)
+!
+!i.e v(1:ndim) = (/(p+0.1,p=1,ndim))
 
 end subroutine
 !
