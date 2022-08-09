@@ -13,10 +13,18 @@ implicit none
 !! ULMO MAIN SCRIPT !!
 !*********************
 real(real64), dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_flux_PHI,sv_mass_flux_PHI,sv_mass_flux_THETA
-real(real64),dimension(2,N_LATS,N_LONS) :: T, M
+real(real64),dimension(2,N_LATS,N_LONS) :: T, M, T_new
 integer(int64), dimension(N_LATS,N_LONS) :: land_mask
 
+integer(fgsl_size_t), parameter :: ndim = 39024
+real(fgsl_double), target :: v(ndim)
+
+
 integer(int64):: lon,lat,height
+type(fgsl_spmatrix) :: A
+type(fgsl_vector) :: B
+
+
 !character(len=100) :: a
 
 
@@ -36,7 +44,7 @@ sv_mass_flux_PHI =calculate_flow_sv_PHI()
 M(1,:,:) = mass_flux_THETA
 M(2,:,:) = mass_flux_PHI
 
-!!! Writing mass flux outputs to files !!
+!! Writing mass flux outputs to files !!
 !call write_file('output_data/sv_mass_flux_Phi.dat',sv_mass_flux_Phi,N_LATS,N_LONS)
 !call write_file('output_data/mass_flux_PHI.dat',mass_flux_PHI,N_LATS,N_LONS)
 !call write_file('output_data/sv_mass_flux_Theta.dat',sv_mass_flux_THETA,N_LATS,N_LONS)
@@ -48,13 +56,25 @@ M(2,:,:) = mass_flux_PHI
 !print"(a,i5)", 'Finished!'
 
 !!! Matrix calculation testing !!!
-!b = calculate_vector_b(T,LAND_MASK_DATA)
-!call write_file('output_data/b.txt',b,N_LATS,1)
 
-!call calculate_matrix(lat,lon,height)
-!call calculate_matrix(0_fgsl_size_t,0_fgsl_size_t,1_fgsl_size_t)
+!! Calculate_matrix !! ****WORKS****
+!lat = 1
+!lon = 1
+!height =1
+!A = calculate_matrix(lat,lon,height)
+!print*,'ulmo main print A(1,1):', fgsl_spmatrix_get(A, 1_fgsl_size_t, 1_fgsl_size_t)
 
-call calculate_vector_b(T)
+
+!! calculate_vector_b !! ****WORKS****
+!v = calculate_vector_b(T)
+!b = fgsl_vector_init(v)
+
+call calculate_new_T(T,1_fgsl_size_t,1_fgsl_size_t,1_fgsl_size_t)
+!write(400, '(''Should be : '',4F12.5)') v(3::3)
+!print*, T_new
+
+
+
 
 end program ULMO
 
