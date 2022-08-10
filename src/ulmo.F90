@@ -66,12 +66,13 @@ M(2,:,:) = mass_flux_PHI
 
 
 !! calculate_vector_b !! ****WORKS****
-!v = calculate_vector_b(T)
+!call calculate_vector_b(T,v,B)
 !b = fgsl_vector_init(v)
+!print*,'1st value', v(25)
 
-call calculate_new_T(T)
+call calculate_new_T(T,T_new)
 !write(400, '(''Should be : '',4F12.5)') v(3::3)
-!print*, T_new
+!print*, T_new()
 
 
 

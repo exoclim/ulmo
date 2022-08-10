@@ -46,16 +46,11 @@ end function calculate_new_lon
 function calculate_matrix() result(A)
   ! NO TRANSPORT !
   type(fgsl_spmatrix) :: A
-  integer(fgsl_size_t) :: mat_index, i
+  integer(fgsl_size_t) ::  i
   integer(fgsl_int) :: status
   real(fgsl_double) :: Aii
   integer(int64):: lat,lon,height
-
-  !real(real64), dimension(N_LATS,1)      :: lats
-  !real(real64), dimension(N_LATS,2)      :: lats_data_file
-
-  !lats_data_file = read_file(LATS_FILE,N_LATS,col_num)
-  !lats(:,1)= lats_data_file(:,2)
+  integer, dimension(39024) :: mat_indexes
 
   ! matrix size = 144x90x2+90x144+144 = 39024 (height*N_LATS*N_LONS+lat*N_LONS+lon)
   A = fgsl_spmatrix_alloc(39024_fgsl_size_t, 39024_fgsl_size_t)
@@ -66,15 +61,18 @@ function calculate_matrix() result(A)
         do lon = 0,N_LONS-1
 
 
-            mat_index = calculate_matrix_index(lat,lon,height)
+            i = calculate_matrix_index(lat,lon,height)
+            !print*,i
+            mat_indexes(i) = i
 
             Aii = 1 ! no transport makes all diagonal components 1
-            status = fgsl_spmatrix_set(A, mat_index, mat_index, Aii) ! build the sparse matrix
+            status = fgsl_spmatrix_set(A, i, i, Aii) ! build the sparse matrix
+            print*,'A matrix (91,91)=' ,fgsl_spmatrix_get(A,90_fgsl_size_t,90_fgsl_size_t)
 
         end do
     end do
   end do
-
+print*,mat_indexes
 
 
 
@@ -95,7 +93,7 @@ end function calculate_matrix
 ! calculates and sets the vector b in matrix Ax=b. EMISSIVITY*SIGMA*T^4 is a blackbody emission from one of the layers,
 ! to ensure an energy exchange between the layers. 1.0/(RHO_WATER*C_V*H_S) prefactor converts a flux in W/m2 to K/s
 !**********************************************************************************************************************
-function calculate_vector_b(T) result(v)
+subroutine calculate_vector_b(T,v,B)
     real(real64),dimension(2,N_LATS,N_LONS),intent(in) :: T
     !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
     real(real64), dimension(N_LATS,N_LONS) :: F_a,F_c
@@ -106,9 +104,9 @@ function calculate_vector_b(T) result(v)
     ! fgsl !
     real(real64) :: b_hij
     integer(fgsl_size_t), parameter :: ndim = 39024
-    real(fgsl_double), target :: v(ndim)
+    real(fgsl_double), target,intent(out) :: v(ndim)
     integer(fgsl_size_t) :: vec_index, size_vec
-    type(fgsl_vector) :: B
+    type(fgsl_vector),intent(out) :: B
 
     SURFACE = 1 ! position in 3D temperatures array (1,:,:)
     DEEP = 2    ! position in 3D temperatures array (2,:,:)
@@ -121,25 +119,28 @@ function calculate_vector_b(T) result(v)
     !testing (works)!
 !    h = 2
 !    depth=h_slab(h)
-!    b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(-F_c(90,144)+T(2,90,144))
+!    b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(-F_c(1,1)+T(2,1,1))
 !    print*,'deep = ',b_hij
 !     h=1
 !     depth= h_slab(h)
-!     b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(90,144)+F_a(90,144)-EMISSIVITY*SIGMA*(T(SURFACE,90,144))**4)*T(SURFACE,90,144)
+!     b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(1,1)+F_a(1,1)-EMISSIVITY*SIGMA*(T(SURFACE,1,1))**4)*T(SURFACE,1,1)
 !     print*,'surf=',b_hij
 
     do h = 1,N_DEPTHS
         do i = 1,N_LATS
             do j = 1,N_LONS
                 depth=h_slab(h)
-                if (h==SURFACE) then
-                    b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(i,j)+F_a(i,j)-EMISSIVITY*SIGMA*(T(SURFACE,i,j))**4)*T(SURFACE,i,j)
+                !write(*,*) depth
+                if (h==1) then !surface h = 1
+                    b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(i,j)+F_a(i,j)-EMISSIVITY*SIGMA*(T(1,i,j))**4)*T(1,i,j)
                 else
                     b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(-F_c(i,j)+T(h,i,j))
                 end if
-                vec_index = (h-1)*N_LATS*N_LONS+((i-1)*N_LONS+(j-1))
+                !write(*,*) b_hij
+                vec_index = (h-1)*N_LATS*N_LONS+(i-1)*N_LONS+(j-1)
+                !write(*,*) vec_index
                 v(vec_index) =  b_hij
-                !print*, 'within function val =',v(vec_index)
+                !write(*,*) 'within function val =',v(0)
 
             end do
         end do
@@ -152,14 +153,14 @@ function calculate_vector_b(T) result(v)
 !    size_vec =  fgsl_vector_get_size(B)
 !    print*, 'size=', size_vec
 !    print*, 'B(1)', v(:)
-end function
+end subroutine
 !!**************************************************************
 !! Subroutine that uses FGSL sparse linear algebra to solve Ax=b
 !!**************************************************************
-subroutine calculate_new_T(T) !result(T_new)
+subroutine calculate_new_T(T,T_new) !result(T_new)
     type(fgsl_spmatrix) :: A,C
     real(real64), dimension(2,N_LATS,N_LONS), intent(in) :: T
-    real(real64), dimension(2,N_LATS,N_LONS) :: T_new
+    real(real64), dimension(2,N_LATS,N_LONS),intent(out) :: T_new
     !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
     real(real64):: residual
     integer(fgsl_size_t),parameter:: n = 39024
@@ -172,7 +173,7 @@ subroutine calculate_new_T(T) !result(T_new)
     integer(fgsl_size_t) :: iter = 0
     type(fgsl_vector) :: u,f
     type(fgsl_splinalg_itersolve) :: work
-    real(fgsl_double), target :: u_f(n),f_f
+    real(fgsl_double), target :: u_f(n),f_f(n)
 
     !equation: Au = f
 
@@ -190,18 +191,17 @@ subroutine calculate_new_T(T) !result(T_new)
     u_f(0:n-1) = (/(0._fgsl_double, p=0,n-1)/)
     u = fgsl_vector_init(u_f)
     size_vec =  fgsl_vector_get_size(u)
-    print*, 'size of u =', size_vec
-    print*,'u(0)= ', u_f(0)
+    !print*, 'size of u =', size_vec
+    !print*,'u(0)= ', u_f(0)
 
 
 
     !f = calculate_vector_b(T)
-    f_f = calculate_vector_b(T)
-    print*,'pre init=',f_f(0)
-    f = fgsl_vector_init(f_f)
+    call calculate_vector_b(T,f_f,f)
+    print*,'f(1)=',f_f(1)
     size_vec =  fgsl_vector_get_size(f)
-    print*, 'size of f=', size_vec
-    print*, 'f(0)= ', f_f(0)
+    !print*, 'size of f=', size_vec
+    !print*, 'f(0)= ', f_f(1)
 
 
     A = calculate_matrix()
