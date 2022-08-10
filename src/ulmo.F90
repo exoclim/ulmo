@@ -61,7 +61,7 @@ M(2,:,:) = mass_flux_PHI
 !lat = 1
 !lon = 1
 !height =1
-!A = calculate_matrix(lat,lon,height)
+!A = calculate_matrix()
 !print*,'ulmo main print A(1,1):', fgsl_spmatrix_get(A, 1_fgsl_size_t, 1_fgsl_size_t)
 
 
@@ -69,7 +69,7 @@ M(2,:,:) = mass_flux_PHI
 !v = calculate_vector_b(T)
 !b = fgsl_vector_init(v)
 
-call calculate_new_T(T,1_fgsl_size_t,1_fgsl_size_t,1_fgsl_size_t)
+call calculate_new_T(T)
 !write(400, '(''Should be : '',4F12.5)') v(3::3)
 !print*, T_new
 

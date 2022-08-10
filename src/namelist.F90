@@ -3,6 +3,7 @@
 !*********************************************************************************
 module NAMELIST
 use, intrinsic :: iso_fortran_env
+use fgsl
 implicit none
 private
 
@@ -40,7 +41,7 @@ private
   real(real64), parameter,public  :: TIME_OUTPUT_TOL = 1e-6 ! days
   real(real64), parameter,public  :: T_OFFSET = 0.0 ! IF you want to restart run, specify start time here, so it doesn't save over stuff, and change input temp files to output ones
   real(real64), parameter,public  :: TOL = 1e-6
-  real(real64), parameter,public  :: MAX_ITER = 100
+  integer(fgsl_size_t), parameter,public  :: MAX_ITER = 100
   real(real64), parameter,public  :: pi = 4*atan(1.)
   integer(int64),parameter,public :: N_DEPTHS = 2 ! 1 deep and 1 surface layer
 !***********************
