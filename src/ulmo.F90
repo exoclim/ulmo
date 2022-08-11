@@ -16,8 +16,8 @@ real(real64), dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_fl
 real(real64),dimension(2,N_LATS,N_LONS) :: T, M, T_new
 integer(int64), dimension(N_LATS,N_LONS) :: land_mask
 
-integer(fgsl_size_t), parameter :: ndim = 39024
-real(fgsl_double), target :: v(ndim)
+integer(fgsl_size_t), parameter :: n = 25920
+real(fgsl_double), target :: v(n)
 
 
 integer(int64):: lon,lat,height
@@ -66,7 +66,8 @@ M(2,:,:) = mass_flux_PHI
 
 
 !! calculate_vector_b !! ****WORKS****
-call calculate_vector_b(T)!,v,B)
+call calculate_vector_b(T,v,B)
+print*, v
 !b = fgsl_vector_init(v)
 !print*,'1st value', v(1)
 
