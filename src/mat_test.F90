@@ -86,7 +86,7 @@ subroutine calculate_vector_b(T,v,B)
     real(real64), dimension(N_LATS,N_LONS) :: F_a,F_c
     real(real64), dimension(25920) :: vec_data
     real(real64) :: depth
-    integer(int64) :: h, N_DEPTHS,i ,j,SURFACE,DEEP,iu
+    integer(int64) :: h,i ,j,SURFACE,DEEP,iu
     !real(real64), parameter:: tol = TOL
     !real(fgsl_size_t),parameter:: max_iter = MAX_ITER
     ! fgsl !
@@ -116,9 +116,9 @@ subroutine calculate_vector_b(T,v,B)
 !    print*,'depth deep',depth
 !    b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(1,1)+F_a(1,1)-EMISSIVITY*SIGMA*(T(SURFACE,1,1))**4)*T(SURFACE,1,1)
 !    print*,'surf=',b_hij
-    do h = 1,2
-        do i = 1, 90
-            do j= 1,144
+    do h = 1,N_DEPTHS
+        do i = 1, N_LATS
+            do j= 1,N_LONS
 
                 depth = h_slab(h)
                 if (h==1) then
@@ -142,7 +142,7 @@ subroutine calculate_vector_b(T,v,B)
     end do
 
 
-!print*, 'vec = ',v-vec_data
+print*, 'vec = ',v
 B = fgsl_vector_init(v)
 size_vec =  fgsl_vector_get_size(B)
 !print*, 'size=', size_vec
@@ -156,24 +156,23 @@ end subroutine
 !    type(fgsl_spmatrix) :: A,C
 !    real(fgsl_double), dimension(2,N_LATS,N_LONS), intent(in) :: T
 !    real(fgsl_double), dimension(2,N_LATS,N_LONS),intent(out) :: T_new
-!    integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
+!    !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
 !    real(fgsl_double):: residual
 !    integer(fgsl_size_t),parameter:: n = 25920
-!    integer(fgsl_int) :: h,i,j,iu
+!    integer(int64) :: h,i,j,iu
 !
 !    integer(fgsl_size_t) :: size_vec
 !    integer(fgsl_int) :: p,status
-!
-!    integer(fgsl_int) :: p
 !    integer(fgsl_size_t) :: iter = 0
 !    type(fgsl_vector) :: u,f
 !    type(fgsl_splinalg_itersolve) :: work
 !    real(fgsl_double), target :: u_f(n),f_f(n)
 !
-!    equation: Au = f
+! !   equation: Au = f
 !
 !
 !    A = fgsl_spmatrix_alloc(n,n)
+!
 !
 !    work =  fgsl_splinalg_itersolve_alloc(fgsl_splinalg_itersolve_gmres,n,0_fgsl_size_t)
 !
@@ -186,30 +185,29 @@ end subroutine
 !    u_f(0:n-1) = (/(0._fgsl_double, p=0,n-1)/)
 !    u = fgsl_vector_init(u_f)
 !    size_vec =  fgsl_vector_get_size(u)
-!    print*, 'size of u =', size_vec
-!    print*,'u(0)= ', u_f(0)
+!    !print*, 'size of u =', size_vec
+!    !print*,'vector u= ', u_f
 !
 !
 !
-!    f = calculate_vector_b(T)
+!
 !    call calculate_vector_b(T,f_f,f)
-!    print*,'f(1)=',f_f(1)
+!    !print*,'f vector=',f_f
 !    size_vec =  fgsl_vector_get_size(f)
-!    print*, 'size of f=', size_vec
-!    print*, 'f(0)= ', f_f(1)
+!    !print*, 'size of f=', size_vec
 !
 !
 !    A = calculate_matrix()
 !    C = fgsl_spmatrix_compcol(A) ! compressed column format
-!
-!
-!    !initial guess x = 0
-!    u_f = 0
-!
+!!
+!!
+!!    !initial guess x = 0
+!!    u_f = 0
+!!
 !    do
 !        status = fgsl_splinalg_itersolve_iterate(C, f, TOL, u, work)
 !
-!         print out residual norm ||A*x-b||
+!         !print out residual norm ||A*x-b||
 !        residual = fgsl_splinalg_itersolve_normr(work)
 !        write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
 !
@@ -220,8 +218,8 @@ end subroutine
 !        if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
 !    end do
 !
-!     output solution !
-! issue here !
+!!     output solution !
+!
 !    do h = 0_fgsl_size_t,N_DEPTHS-1_fgsl_size_t ! sets the new temperature from the fgsl vector
 !        do i = 0_fgsl_size_t, N_LATS-1_fgsl_size_t
 !            do j = 0_fgsl_size_t,N_LONS-1_fgsl_size_t

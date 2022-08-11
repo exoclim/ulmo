@@ -67,7 +67,7 @@ M(2,:,:) = mass_flux_PHI
 
 !! calculate_vector_b !! ****WORKS****
 call calculate_vector_b(T,v,B)
-print*, v
+!print*, v
 !b = fgsl_vector_init(v)
 !print*,'1st value', v(1)
 
