@@ -68,11 +68,11 @@ private
 ! output data files
 !******************
   real(real64)            ,parameter,public  :: MAX_FNAME_CHAR = 100
-  character(len=*),parameter,public  :: OUTPUT_UPWARD_Q_FLUX = "output_data/ProCb/upward_surface_Q_flux_"
-  character(len=*),parameter,public  :: OUTPUT_SURFACE_TEMP_DATA = "output_data/ProCb/T_surf_"
-  character(len=*),parameter,public  :: OUTPUT_DEEP_TEMP_DATA = "output_data/ProCb/T_deep_"
-  character(len=*),parameter,public  :: OUTPUT_X_MASS_FLUX_DATA = "output_data/ProCb/eastward_flow_"
-  character(len=*),parameter,public  :: OUTPUT_Y_MASS_FLUX_DATA = "output_data/ProCb/northward_flow_"
-  character(len=*),parameter,public  :: OUTPUT_VERITCAL_FLUX_DATA = "output_data/ProCb/vertical_mass_flux_"
-  character(len=*),parameter,public  :: OUTPUT_DATA_EXT = "_days.dat"
+  character(len=50),parameter,public  :: OUTPUT_UPWARD_Q_FLUX = "output_data/ProCb/upward_surface_Q_flux_"
+  character(len=50),parameter,public  :: OUTPUT_SURFACE_TEMP_DATA = "output_data/ProCb/T_surf_"
+  character(len=50),parameter,public  :: OUTPUT_DEEP_TEMP_DATA = "output_data/ProCb/T_deep_"
+  character(len=50),parameter,public  :: OUTPUT_X_MASS_FLUX_DATA = "output_data/ProCb/eastward_flow_"
+  character(len=50),parameter,public  :: OUTPUT_Y_MASS_FLUX_DATA = "output_data/ProCb/northward_flow_"
+  character(len=50),parameter,public  :: OUTPUT_VERITCAL_FLUX_DATA = "output_data/ProCb/vertical_mass_flux_"
+  character(len=50),parameter,public  :: OUTPUT_DATA_EXT = "_days.dat"
 end module NAMELIST

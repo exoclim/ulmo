@@ -7,6 +7,8 @@ program ULMO
     !use process_output_data
     use mat_test
     use fgsl
+    use time_stepper
+    use process_output_data
     use, intrinsic :: iso_fortran_env
 implicit none
 !*********************
@@ -15,12 +17,13 @@ implicit none
 real(real64), dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_flux_PHI,sv_mass_flux_PHI,sv_mass_flux_THETA
 real(real64),dimension(2,N_LATS,N_LONS) :: T, M, T_new
 integer(int64), dimension(N_LATS,N_LONS) :: land_mask
+real(real64) :: time
 
 integer(fgsl_size_t), parameter :: n = 25920
 real(fgsl_double), target :: v(n)
 
 
-integer(int64):: lon,lat,height
+integer(int64):: lon,lat,height,n_times
 type(fgsl_spmatrix) :: A
 type(fgsl_vector) :: B
 
@@ -36,13 +39,13 @@ T(1,:,:) = T_surf
 T(2,:,:) = T_deep
 
 ! COMBINING M_THETA and M_PHI INTO ONE 3D ARRAY FOR EASIER ANALYSIS !
-mass_flux_THETA = calculate_mass_flux_THETA()
-mass_flux_PHI = calculate_mass_flux_PHI()
-sv_mass_flux_THETA =calculate_flow_sv_THETA()
-sv_mass_flux_PHI =calculate_flow_sv_PHI()
-
-M(1,:,:) = mass_flux_THETA
-M(2,:,:) = mass_flux_PHI
+!mass_flux_THETA = calculate_mass_flux_THETA()
+!mass_flux_PHI = calculate_mass_flux_PHI()
+!sv_mass_flux_THETA =calculate_flow_sv_THETA()
+!sv_mass_flux_PHI =calculate_flow_sv_PHI()
+!
+!M(1,:,:) = mass_flux_THETA
+!M(2,:,:) = mass_flux_PHI
 
 !! Writing mass flux outputs to files !!
 !call write_file('output_data/sv_mass_flux_Phi.dat',sv_mass_flux_Phi,N_LATS,N_LONS)
@@ -71,10 +74,18 @@ M(2,:,:) = mass_flux_PHI
 !b = fgsl_vector_init(v)
 !print*,'1st value', v(1)
 
-call calculate_new_T(T,T_new)
-print*,DELTA_T
+!! calculate_new_T !!
+!call calculate_new_T(T,T_new)
+!print*,DELTA_T
 !write(400, '(''Should be : '',4F12.5)') v(3::3)
 !print*, T_new()
+
+!! t_stepper !!
+n_times = 1200000
+call t_stepper(n_times)
+
+!time = 1200000.
+!call process_output(T,time)
 
 
 
