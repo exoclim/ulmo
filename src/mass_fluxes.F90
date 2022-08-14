@@ -9,132 +9,136 @@ use, intrinsic :: iso_fortran_env
 implicit none
 public :: calculate_flow_sv_THETA  , calculate_mass_flux_THETA, calculate_mass_flux_PHI, calculate_flow_sv_PHI
 private
-!
+
 contains
 !**********************************************************
 ! Function to calculate the surface stress in PHI direction
 !**********************************************************
-function calculate_surface_stress_PHI() result(tau_PHI)
-     real(real64), dimension(n_lats,n_lons) :: u_wind
-     real(real64), dimension(n_lats,n_lons) :: tau_PHI
-     integer(int64) :: i,j
+subroutine calculate_surface_stress_PHI(u_wind,tau_PHI)
+    real(real64), dimension(N_LATS,N_LONS),intent(in) :: u_wind
+    real(real64), dimension(N_LATS,N_LONS),intent(out) :: tau_PHI
+    integer(int64) :: i,j
 
-     u_wind = read_file(U_WIND_DATA,N_LATS,N_LONS)
+    do i = 1,N_LATS
+        do j = 1,N_LONS
+            tau_PHI(i,j) = C_D*RHO_AIR*u_wind(i,j)*abs(u_wind(i,j))
+        end do
+    end do
 
-!     do coord !! not sure how this works / what output do i need? !!
-        do i = 1,N_LATS ! over lats points
-            do j = 1,N_LONS ! over lons points
-                tau_PHI(i,j) = C_D*RHO_AIR*u_wind(i,j)*abs(u_wind(i,j))
-                end do
-            end do
- !       end do
-
-
-end function calculate_surface_stress_PHI
+end subroutine calculate_surface_stress_PHI
 !************************************************************
 ! Function to calculate the surface stress in THETA direction
 !************************************************************
-function calculate_surface_stress_THETA() result(tau_THETA)
-     real(real64), dimension(n_lats,n_lons) :: v_wind
-     real(real64), dimension(n_lats,n_lons) :: tau_THETA
-     integer(int64) :: i,j
+subroutine calculate_surface_stress_THETA(v_wind,tau_THETA)
+    real(real64), dimension(N_LATS,N_LONS),intent(in):: v_wind
+    real(real64), dimension(N_LATS,N_LONS),intent(out) :: tau_THETA
+    integer(int64) :: i,j
+    do i = 1,N_LATS
+        do j = 1,N_LONS
+            tau_THETA(i,j) = C_D*RHO_AIR*v_wind(i,j)*abs(v_wind(i,j))
+        end do
+    end do
 
-     v_wind = read_file(V_WIND_DATA,N_LATS,N_LONS)
-
-        do i = 1,N_LATS ! over lats points
-            do j = 1,N_LONS ! over lons points
-                tau_THETA(i,j) = C_D*RHO_AIR*v_wind(i,j)*abs(v_wind(i,j))
-                end do
-            end do
-
-
-end function calculate_surface_stress_THETA
+end subroutine calculate_surface_stress_THETA
 !*********************************************
 ! Function to calculate the Coriolis parameter
 !*********************************************
-function calculate_coriolis_parameter(theta_deg) result(f_out)
-    real(real64) :: f_out
+subroutine calculate_coriolis_parameter(theta_deg,f)
+    real(real64),intent(out) :: f
     real(real64), intent(in)  :: theta_deg
-    f_out = 2*OMEGA*sin(deg_to_rad(theta_deg))
+    f = 2*OMEGA*sin(deg_to_rad(theta_deg))
 
-end function calculate_coriolis_parameter
+end subroutine calculate_coriolis_parameter
 !*************************************************************************************
 ! Functions to calculate the mass flux in THETA and PHI directions from surface stress
 !*************************************************************************************
-function calculate_mass_flux_THETA() result(mass_flux_THETA)
+subroutine calculate_mass_flux_THETA(u_wind,v_wind,land_mask,mass_flux_THETA)
     integer(int64) :: i,j,col_num
-    real(real64), dimension(N_LATS,N_LONS) :: tau_PHI,tau_THETA,mass_flux_THETA
-    real(real64), dimension(N_LATS,1)      :: f,lats
-    real(real64), dimension(N_LATS,2)      :: lats_data_file
-    integer(int64), dimension(N_LATS,N_LONS) :: land_mask
+    real(real64) :: f
+    real(real64), dimension(:,:),allocatable :: tau_PHI,tau_THETA,lats,lats_data
+    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
+    real(real64), dimension(N_LATS,N_LONS),intent(in) :: u_wind,v_wind
+    real(real64), dimension(N_LATS,N_LONS), intent(out) :: mass_flux_THETA
 
-    col_num = 2 ! match int 64 data type
-    tau_PHI = calculate_surface_stress_PHI()
-    tau_THETA = calculate_surface_stress_THETA()
-    lats_data_file = read_file(LATS_FILE,N_LATS,col_num)
-    lats(:,1)= lats_data_file(:,2) ! Second column in lats data file includes the latitude points
-    land_mask = read_file(LAND_MASK_DATA,N_LATS,N_LONS)
+    allocate(tau_PHI(N_LATS,N_LONS))
+    allocate(tau_THETA(N_LATS,N_LONS))
 
+    allocate(lats(N_LATS,1))
+    allocate(lats_data(N_LATS,2))
+
+    col_num = 2
+    call calculate_surface_stress_PHI(u_wind,tau_PHI)
+    call calculate_surface_stress_THETA(v_wind,tau_THETA)
+    lats_data = read_file_real(LATS_FILE,N_LATS,col_num)
+    lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
 
     do i = 1,N_LATS
-
-        f(i,1) = calculate_coriolis_parameter(lats(i,1))
-
+        call calculate_coriolis_parameter(lats(i,1),f)
         do j = 1,N_LONS
-
             !! land mask if statement !!
             if (land_mask(i,j) == 1) then
                 mass_flux_THETA(i,j) = 0
             else
-                mass_flux_THETA(i,j) = (EPSILON*tau_THETA(i,j)+f(i,1)*tau_PHI(i,j))/(EPSILON**2.0+f(i,1)**2)
+                mass_flux_THETA(i,j) = (EPSILON*tau_THETA(i,j)+f*tau_PHI(i,j))/(EPSILON**2.0+f**2)
             end if
-
-
         end do
     end do
 
-end function calculate_mass_flux_THETA
+    deallocate(tau_PHI,tau_THETA,lats,lats_data)
+!    deallocate(tau_THETA)
+!    deallocate(f)
+!    deallocate(lats)
+!    deallocate(lats_data)
 
-function calculate_mass_flux_PHI() result(mass_flux_PHI)
+end subroutine calculate_mass_flux_THETA
+
+subroutine calculate_mass_flux_PHI(u_wind,v_wind,land_mask,mass_flux_PHI)
     integer(int64) :: i,j,col_num
-    real(real64), dimension(N_LATS,N_LONS) :: tau_PHI,tau_THETA,mass_flux_PHI
-    real(real64), dimension(N_LATS,1)      :: f,lats
-    real(real64), dimension(N_LATS,2)      :: lats_data_file
-    integer(int64), dimension(N_LATS,N_LONS) :: land_mask
+    real(real64) :: f
+    real(real64), dimension(:,:),allocatable :: tau_PHI,tau_THETA,lats,lats_data
+    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
+    real(real64), dimension(N_LATS,N_LONS),intent(in) :: u_wind, v_wind
+    real(real64), dimension(N_LATS,N_LONS), intent(out) :: mass_flux_PHI
+
+    allocate(tau_PHI(N_LATS,N_LONS))
+    allocate(tau_THETA(N_LATS,N_LONS))
+    allocate(lats(N_LATS,1))
+    allocate(lats_data(N_LATS,2))
 
     col_num = 2 ! match int64 data type
-    tau_PHI = calculate_surface_stress_PHI()
-    tau_THETA = calculate_surface_stress_THETA()
-    lats_data_file = read_file(LATS_FILE,N_LATS,col_num)
-    lats(:,1)= lats_data_file(:,2) ! Second column in lats data file includes the latitude points
-    land_mask = read_file(LAND_MASK_DATA,N_LATS,N_LONS)
-
+    call calculate_surface_stress_PHI(u_wind,tau_PHI)
+    call calculate_surface_stress_THETA(v_wind,tau_THETA)
+    lats_data = read_file_real(LATS_FILE,N_LATS,col_num)
+    lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
 
     do i = 1,N_LATS
-
-        f(i,1) = calculate_coriolis_parameter(lats(i,1))
-
+        call calculate_coriolis_parameter(lats(i,1),f)
         do j = 1,N_LONS
-
             !! land mask if statement !!
             if (land_mask(i,j) == 1) then
                 mass_flux_PHI(i,j) = 0
             else
-                mass_flux_PHI(i,j) = (EPSILON*tau_PHI(i,j)-f(i,1)*tau_THETA(i,j))/(EPSILON**2.0+f(i,1)**2.0)
+                mass_flux_PHI(i,j) = (EPSILON*tau_PHI(i,j)-f*tau_THETA(i,j))/(EPSILON**2.0+f**2.0)
             end if
-
         end do
     end do
 
-end function calculate_mass_flux_PHI
+    deallocate(tau_PHI,tau_THETA,lats,lats_data)
+
+end subroutine calculate_mass_flux_PHI
 !!****************************************************************************
 !! Functions to convert mass flux into the unit of Sverdrups for Theta and Phi
 !!****************************************************************************
-function calculate_flow_sv_PHI() result(sv_flow_PHI)
+subroutine calculate_flow_sv_PHI(u_wind,v_wind,land_mask,sv_flow_PHI)
     integer(int64) :: i,j
-    real(real64), dimension(N_LATS,N_lONS) :: mass_flux_PHI, sv_flow_PHI
+    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
+    real(real64), dimension(N_LATS,N_lONS), intent(in) :: u_wind,v_wind
+    real(real64), dimension(N_LATS,N_lONS), intent(out) :: sv_flow_PHI
+    real(real64),dimension(:,:),allocatable :: mass_flux_PHI
 
-    mass_flux_PHI = calculate_mass_flux_PHI()
+    allocate(mass_flux_PHI(N_LATS,N_LONS))
+
+    call calculate_mass_flux_PHI(u_wind,v_wind,land_mask,mass_flux_PHI)
 
     do i = 1,N_LATS
         do j= 1,N_LONS
@@ -143,31 +147,39 @@ function calculate_flow_sv_PHI() result(sv_flow_PHI)
         end do
     end do
 
-end function calculate_flow_sv_PHI
+    deallocate(mass_flux_PHI)
 
-function calculate_flow_sv_THETA() result(sv_flow_THETA)
+end subroutine calculate_flow_sv_PHI
+
+subroutine calculate_flow_sv_THETA(u_wind,v_wind,land_mask,sv_flow_THETA)
     integer(int64) :: i,j,col_num
-    real(real64), dimension(N_LATS,2)      :: lats_data_file
-    real(real64), dimension(N_LATS,1)      ::  lats,theta
-    real(real64), dimension(N_LATS,N_lONS) :: mass_flux_THETA,sv_flow_THETA
+    real(real64) :: theta
+    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
+    real(real64), dimension(N_LATS,N_lONS), intent(in) :: u_wind,v_wind
+    real(real64), dimension(:,:), allocatable :: lats_data,lats,mass_flux_THETA
+    real(real64), dimension(N_LATS,N_lONS),intent(out) :: sv_flow_THETA
 
-
+    allocate(lats(N_LATS,1))
+    allocate(lats_data(N_LATS,2))
+    allocate(mass_flux_THETA(N_LATS,N_LONS))
 
     col_num = 2
-    lats_data_file = read_file(LATS_FILE,N_LATS,col_num)
-    lats(:,1)= lats_data_file(:,2) ! Second column in lats data file includes the latitude points
+    lats_data = read_file_real(LATS_FILE,N_LATS,col_num)
+    lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
 
-    mass_flux_THETA = calculate_mass_flux_THETA()
+    call calculate_mass_flux_THETA(u_wind,v_wind,land_mask,mass_flux_THETA)
 
     do i = 1,N_LATS
-        theta(i,1) = deg_to_rad(lats(i,1))
+        theta = deg_to_rad(lats(i,1))
         do j= 1,N_LONS
-            sv_flow_THETA(i,j) = mass_flux_THETA(i,j) * R_PLANET * cos(theta(i,1)) * deg_to_rad(DELTA_LON) / RHO_WATER /1.0e6
+            sv_flow_THETA(i,j) = mass_flux_THETA(i,j) * R_PLANET * cos(theta) * deg_to_rad(DELTA_LON) / RHO_WATER /1.0e6
 
         end do
     end do
 
-end function calculate_flow_sv_THETA
+    deallocate(lats,lats_data,mass_flux_THETA)
+
+end subroutine calculate_flow_sv_THETA
 
 
 

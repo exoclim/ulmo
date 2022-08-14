@@ -75,44 +75,64 @@ implicit none
 !print*, T_new()
 
 !! t_stepper !!
-    real(real64),dimension(2,N_LATS,N_LONS) :: T
-    real(real64), dimension(N_LATS,N_LONS) :: T_surf,T_deep
-    integer(int64) :: n_times !, version
-    real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new
-    integer(int64) :: ti
+!    real(real64),dimension(2,N_LATS,N_LONS) :: T
+!    real(real64), dimension(N_LATS,N_LONS) :: T_surf,T_deep
+!    integer(int64) :: n_times !, version
+!    real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new
+!    integer(int64) :: ti
+!
+!    T_surf= read_file(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
+!    T_deep= read_file(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
+!
+!    T(1,:,:) = T_surf
+!    T(2,:,:) = T_deep
+!
+!    n_times = 1200000
+!
+!
+!    !Grid_vals *grid = xmalloc(sizeof(Grid_vals)) I think thi is unique to c
+!    ! need construct grid statement
+!    !temperature data
+!!    time = 0
+!!    days = 0
+!!    allocate(T(2,N_LATS,N_LONS))
+!    do ti = 1,n_times
+!        time = (ti+1.)*DELTA_T
+!        print*,ti, T(1,1,1)
+!        call calculate_new_T(T)
+!        if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+!            days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
+!            print*, "Days passed = %lg\n", days
+!        end if
+!
+!        if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+!            call process_output(T,time)!,M)
+!        end if
+!
+!!time = 1200000.
+!!call process_output(T,time)
+!        T = T
+!    end do
 
-    T_surf= read_file(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
-    T_deep= read_file(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
+! Mass flux testing !
+real(real64), dimension(:,:),allocatable :: u_wind,v_wind,sv_flow_phi,sv_flow_theta
+integer(int64), dimension(:,:), allocatable :: land_mask
 
-    T(1,:,:) = T_surf
-    T(2,:,:) = T_deep
+allocate(u_wind(N_LATS,N_LONS),v_wind(N_LATS,N_LONS),land_mask(N_LATS,N_LONS),sv_flow_phi(N_LATS,N_LONS)&
+,sv_flow_theta(N_LATS,N_LONS))
 
-    n_times = 1200000
+u_wind = read_file_real(U_WIND_DATA,N_LATS,N_LONS)
+v_wind = read_file_real(V_WIND_DATA,N_LATS,N_LONS)
+land_mask = read_file_int(LAND_MASK_DATA,N_LATS,N_LONS)
 
+call calculate_flow_sv_PHI(u_wind,v_wind,land_mask,sv_flow_phi)
+call calculate_flow_sv_THETA(u_wind,v_wind,land_mask,sv_flow_theta)
 
-    !Grid_vals *grid = xmalloc(sizeof(Grid_vals)) I think thi is unique to c
-    ! need construct grid statement
-    !temperature data
-!    time = 0
-!    days = 0
-!    allocate(T(2,N_LATS,N_LONS))
-    do ti = 1,n_times
-        time = (ti+1.)*DELTA_T
-        print*,ti, T(1,1,1)
-        call calculate_new_T(T)
-        if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
-            days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
-            print*, "Days passed = %lg\n", days
-        end if
+call write_file('output_data/sv_flow_Phi.dat',sv_flow_phi,N_LATS,N_LONS)
+call write_file('output_data/sv_flow_Theta.dat',sv_flow_theta,N_LATS,N_LONS)
 
-        if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
-            call process_output(T,time)!,M)
-        end if
+deallocate(u_wind,v_wind,land_mask,sv_flow_phi,sv_flow_theta)
 
-!time = 1200000.
-!call process_output(T,time)
-        T = T
-    end do
 
 
 
