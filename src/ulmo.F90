@@ -3,40 +3,34 @@ program ULMO
     use MASS_FLUX
     use READ_DATA
     use NAMELIST
-    !use MATRIX_CALC
-    !use process_output_data
-    use mat_test
+    use MATRIX_CALC
     use fgsl
-    use time_stepper
+    !use time_stepper
     use process_output_data
     use, intrinsic :: iso_fortran_env
 implicit none
 !*********************
 !! ULMO MAIN SCRIPT !!
 !*********************
-real(real64), dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_flux_PHI,sv_mass_flux_PHI,sv_mass_flux_THETA
-real(real64),dimension(2,N_LATS,N_LONS) :: T, M, T_new
-integer(int64), dimension(N_LATS,N_LONS) :: land_mask
-real(real64) :: time
-
-integer(fgsl_size_t), parameter :: n = 25920
-real(fgsl_double), target :: v(n)
-
-
-integer(int64):: lon,lat,height,n_times
-type(fgsl_spmatrix) :: A
-type(fgsl_vector) :: B
+!real(real64), dimension(N_LATS,N_LONS) :: T_surf, T_deep,mass_flux_THETA,mass_flux_PHI,sv_mass_flux_PHI,sv_mass_flux_THETA
+!real(real64),dimension(2,N_LATS,N_LONS) :: T, M, T_new
+!integer(int64), dimension(N_LATS,N_LONS) :: land_mask
+!real(real64) :: time
+!
+!integer(fgsl_size_t), parameter :: n = 25920
+!real(fgsl_double), target :: v(n)
+!
+!
+!integer(int64):: lon,lat,height,n_times
+!type(fgsl_spmatrix) :: A
+!type(fgsl_vector) :: B
 
 
 !character(len=100) :: a
 
 
 ! COMBINING T_SURF AND T_DEEP INTO ONE 3D ARRAY FOR EASIER ANALYSIS !
-T_surf= read_file(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
-T_deep = read_file(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
 
-T(1,:,:) = T_surf
-T(2,:,:) = T_deep
 
 ! COMBINING M_THETA and M_PHI INTO ONE 3D ARRAY FOR EASIER ANALYSIS !
 !mass_flux_THETA = calculate_mass_flux_THETA()
@@ -81,11 +75,44 @@ T(2,:,:) = T_deep
 !print*, T_new()
 
 !! t_stepper !!
-n_times = 1200000
-call t_stepper(n_times)
+    real(real64),dimension(2,N_LATS,N_LONS) :: T
+    real(real64), dimension(N_LATS,N_LONS) :: T_surf,T_deep
+    integer(int64) :: n_times !, version
+    real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new
+    integer(int64) :: ti
+
+    T_surf= read_file(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
+    T_deep= read_file(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
+
+    T(1,:,:) = T_surf
+    T(2,:,:) = T_deep
+
+    n_times = 1200000
+
+
+    !Grid_vals *grid = xmalloc(sizeof(Grid_vals)) I think thi is unique to c
+    ! need construct grid statement
+    !temperature data
+!    time = 0
+!    days = 0
+!    allocate(T(2,N_LATS,N_LONS))
+    do ti = 1,n_times
+        time = (ti+1.)*DELTA_T
+        print*,ti, T(1,1,1)
+        call calculate_new_T(T)
+        if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+            days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
+            print*, "Days passed = %lg\n", days
+        end if
+
+        if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+            call process_output(T,time)!,M)
+        end if
 
 !time = 1200000.
 !call process_output(T,time)
+        T = T
+    end do
 
 
 

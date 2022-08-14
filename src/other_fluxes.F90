@@ -61,7 +61,7 @@ end function
 function calculate_F_c(T) result(F_c)
     integer :: i,j
     real(real64), dimension(N_LATS,N_LONS):: F_c
-    real(real64), dimension(2,N_LATS,N_LONS), intent(in) :: T
+    real(real64), dimension(:,:,:), intent(in) :: T
     ! h = 1 surface
     ! h = 2 deep
     do i=1,N_LATS

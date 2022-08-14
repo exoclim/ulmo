@@ -10,7 +10,7 @@ use HEIGHT_OF_SLAB
 use fgsl
 use, intrinsic :: iso_fortran_env
 implicit none
-public :: calculate_matrix , calculate_vector_b , calculate_new_T
+public :: calculate_matrix , calculate_vector_f , calculate_new_T
 private
 
 contains
@@ -48,7 +48,7 @@ function calculate_matrix() result(A)
   integer(int64):: lat,lon,height
   integer(fgsl_int) :: status
   real(fgsl_double) :: Aii
-  integer, dimension(25920) :: mat_indexes
+  !integer, dimension(25920) :: mat_indexes
 
   ! matrix size = 144x90x2+90x144+144 = 39024 (height*N_LATS*N_LONS+lat*N_LONS+lon)
   A = fgsl_spmatrix_alloc(25920_fgsl_size_t, 25920_fgsl_size_t)
@@ -81,19 +81,22 @@ end function calculate_matrix
 ! calculates and sets the vector b in matrix Ax=b. EMISSIVITY*SIGMA*T^4 is a blackbody emission from one of the layers,
 ! to ensure an energy exchange between the layers. 1.0/(RHO_WATER*C_V*H_S) prefactor converts a flux in W/m2 to K/s
 !**********************************************************************************************************************
-subroutine calculate_vector_b(T,v)!,B)
-    real(fgsl_double),dimension(2,N_LATS,N_LONS),intent(in) :: T
+subroutine calculate_vector_f(T,f_f)!,B)
+    real(fgsl_double),dimension(:,:,:),intent(in) :: T
     !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
-    real(real64), dimension(N_LATS,N_LONS) :: F_a,F_c
+    real(real64), dimension(:,:),allocatable :: F_a,F_c
     real(real64), dimension(25920) :: vec_data
     real(real64) :: depth,b_hij
     integer(int64) :: h,i ,j,SURFACE,DEEP,iu
     ! fgsl !
     integer(fgsl_size_t), parameter :: n = 25920
-    real(fgsl_double), target,intent(out) :: v(n)
+    real(fgsl_double), target,dimension(:),intent(out) :: f_f
     integer(fgsl_size_t) :: vec_index,size_vec
     real(fgsl_double) :: vec_val
-    !type(fgsl_vector),intent(out) :: B
+    !type(fgsl_vector),intent(out) :: f
+
+    allocate(F_c(N_LATS,N_LONS))
+    allocate(F_a(N_LATS,N_LONS))
 
     SURFACE = 1 ! position in 3D temperatures array (1,:,:)
     DEEP = 2    ! position in 3D temperatures array (2,:,:)
@@ -131,7 +134,7 @@ subroutine calculate_vector_b(T,v)!,B)
                 !print*, vec_index
                 vec_val = b_hij ! making sure the type is fgsl_size_t
                 !print*, vec_val
-                v(vec_index+1) = vec_val
+                f_f(vec_index+1) = vec_val
 
 
 
@@ -141,7 +144,9 @@ subroutine calculate_vector_b(T,v)!,B)
 
 
 !print*, 'vec = ',v
-!B = fgsl_vector_init(v)
+!f = fgsl_vector_init(f_f)
+    deallocate(F_a)
+    deallocate(F_c)
 !size_vec =  fgsl_vector_get_size(B)
 !print*, 'size=', size_vec
 
@@ -150,29 +155,31 @@ end subroutine
 !!**************************************************************
 !! Subroutine that uses FGSL sparse linear algebra to solve Ax=b
 !!**************************************************************
-subroutine calculate_new_T(T,T_new) !result(T_new)
+subroutine calculate_new_T(T) !result(T_new)
 
-    real(real64), dimension(2,N_LATS,N_LONS), intent(in) :: T
-    real(real64), dimension(2,N_LATS,N_LONS),intent(out) :: T_new
+    real(real64), dimension(:,:,:), intent(inout) :: T
     !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
     integer(int64) :: h,i,j,iu
     ! fgsl !
     type(fgsl_spmatrix) :: A,C
     real(fgsl_double):: residual
     integer(fgsl_size_t),parameter:: n = 25920
-    integer(fgsl_size_t) :: size_vec
+    !integer(fgsl_size_t) :: size_vec
     integer(fgsl_int) :: p,status
     integer(fgsl_size_t) :: iter = 0
     real(fgsl_double), parameter :: tol = 1.0e-6
     type(fgsl_vector) :: u,f
     type(fgsl_splinalg_itersolve_type), parameter :: S = fgsl_splinalg_itersolve_gmres
     type(fgsl_splinalg_itersolve) :: work
-    real(fgsl_double), target :: u_f(n),f_f(n)
+    real(fgsl_double), target, allocatable,dimension(:) :: u_f,f_f
 
  !   solving equation: Au = f
 
 
     A = fgsl_spmatrix_alloc(n,n)
+    allocate(u_f(n))
+    allocate(f_f(n))
+
 
 
     work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
@@ -188,8 +195,9 @@ subroutine calculate_new_T(T,T_new) !result(T_new)
 
 
 
-    call calculate_vector_b(T,f_f)
+    call calculate_vector_f(T,f_f)
     f = fgsl_vector_init(f_f)
+
 
     ! vector check !
     !print*,'f vector=',f_f
@@ -234,7 +242,7 @@ subroutine calculate_new_T(T,T_new) !result(T_new)
     do h = 1,N_DEPTHS
         do i = 1, N_LATS
             do j = 1,N_LONS
-                T_new(h,i,j) =  u_f(h*N_LATS*N_LONS+(i*N_LONS)+j)
+                T(h,i,j) =  u_f(h*N_LATS*N_LONS+(i*N_LONS)+j)
             end do
         end do
     end do
@@ -242,12 +250,18 @@ subroutine calculate_new_T(T,T_new) !result(T_new)
     !print*,'T_new(1,1,1) = ',T_new(1,1,1)
     !print*,'T_old(1,1,1)=', T(1,1,1)
 
+    deallocate(u_f)
+    deallocate(f_f)
+
     call fgsl_splinalg_itersolve_free(work)
 
     call fgsl_spmatrix_free(A)
     call fgsl_spmatrix_free(C)
     call fgsl_vector_free(f)
     call fgsl_vector_free(u)
+
+
+
 
 
 end subroutine
