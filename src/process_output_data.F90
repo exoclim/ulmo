@@ -45,6 +45,7 @@ end subroutine write_file_time
 ! Function that converts a integer to a string
 !*********************************************
 function int_to_str(k) result(str)
+    ! This function is not working !
     integer(int64), intent(in) :: k
     character(len=50) :: str
     write(unit = str, fmt = *) k
