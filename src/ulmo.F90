@@ -12,7 +12,7 @@ implicit none
 !*********************
 !! ULMO MAIN SCRIPT !!
 !*********************
-!!! Matrix calculation testing !!!
+!!! Matrix calculation testing !!! ****WORKS****
 !! Mass flux testing !!
 !real(real64), dimension(:,:),allocatable :: u_wind,v_wind,sv_flow_phi,sv_flow_theta
 !integer(int64), dimension(:,:), allocatable :: land_mask
@@ -33,16 +33,18 @@ implicit none
 !deallocate(u_wind,v_wind,land_mask,sv_flow_phi,sv_flow_theta)
 
 real(real64),dimension(:,:,:),allocatable :: T
-real(real64), dimension(:,:),allocatable :: T_surf,T_deep
+real(real64), dimension(:,:),allocatable :: T_surf,T_deep,T_surf_out
+
+integer(int64) :: n_times ! time stepper testing
 !real(fgsl_double),dimension(:),target,allocatable :: f_f ! vector testing
 !type(fgsl_vector) :: f ! vector testing
 !integer(fgsl_size_t),parameter:: n = 25920 ! vector testing
+real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new ! timestepper testing
+integer(int64) :: ti ! time stepper testing
 
-!integer(int64) :: n_times !, version
-!real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new
-!integer(int64) :: ti
+n_times = 20
 
-allocate(T(2,N_LATS,N_LONS),T_surf(N_LATS,N_LONS),T_deep(N_LATS,N_LONS))
+allocate(T(2,N_LATS,N_LONS),T_surf(N_LATS,N_LONS),T_deep(N_LATS,N_LONS),T_surf_out(n_times,1))
 
 !allocate(f_f(n)) ! vector testing
 
@@ -62,54 +64,54 @@ T(2,:,:) = T_deep
 
 !! calculate_vector_f !! ****WORKS****
 !f = fgsl_vector_init(f_f)
-!call calculate_vector_f(T,f_f)
+!call calculate_vector_f_values(T,f_f)
 !print*, f_f
 !deallocate(f_f)
 !b = fgsl_vector_init(v)
 !print*,'1st value', v(1)
 
-!! calculate_new_T !!
-print*, 'T_1(1,1,1) = ', T(1,1,1)
-call calculate_new_T(T)
-print*, 'T_2(1,1,1) = ', T(1,1,1)
-call calculate_new_T(T)
-print*, 'T_3(1,1,1)=',T(1,1,1)
+!! calculate_new_T !! ****WORKS****
+!print*, 'T_1(1,1,1) = ', T(1,2,7)
+!call calculate_new_T(T)
+!print*, 'T_2(1,1,1) = ', T(1,2,7)
+!call calculate_new_T(T)
+!print*, 'T_3(1,1,1)=',T(1,2,7)
+!ti = 3
+!time = (ti+1)*DELTA_T
 
-!print*,DELTA_T
-!write(400, '(''Should be : '',4F12.5)') v(3::3)
-!print*, T_new()
+do ti = 1,n_times
+    call calculate_new_T(T)
+    T_surf_out(ti,1) = sum(T(1,:,:))/(144*90)
+end do
+!print*, T_surf_out
+call write_file('output_data/ProCb/T_surf.dat',T_surf_out,n_times,1_int64)
+
 
 !! t_stepper !!
 
-!    n_times = 1200000
-!
-!
-!    !Grid_vals *grid = xmalloc(sizeof(Grid_vals)) I think thi is unique to c
-!    ! need construct grid statement
-!    !temperature data
-!!    time = 0
-!!    days = 0
-!!    allocate(T(2,N_LATS,N_LONS))
-!    do ti = 1,n_times
-!        time = (ti+1.)*DELTA_T
-!        print*,ti, T(1,1,1)
-!        call calculate_new_T(T)
-!        if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
-!            days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
-!            print*, "Days passed = %lg\n", days
-!        end if
-!
-!        if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
-!            call process_output(T,time)!,M)
-!        end if
-!
-!!time = 1200000.
-!!call process_output(T,time)
-!        T = T
-!    end do
 
 
-deallocate(T,T_surf,T_deep)
+
+    !Grid_vals *grid = xmalloc(sizeof(Grid_vals)) I think thi is unique to c
+    ! need construct grid statement
+    !temperature data
+
+!do ti = 1,n_times
+!    time = (ti+1.)*DELTA_T
+!    call calculate_new_T(T)
+!    if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+!        days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
+!        print*, "Days passed =", days,'Avg Surf Temp = ', sum(T(1,:,:))/(144*90)
+!    end if
+!
+!    if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+!        call process_output(T,time)!,M)
+!    end if
+!
+!end do
+
+
+deallocate(T,T_surf,T_deep,T_surf_out)
 
 
 
