@@ -15,8 +15,8 @@ contains
 ! Function to calculate the surface stress in PHI direction
 !**********************************************************
 subroutine calculate_surface_stress_PHI(u_wind,tau_PHI)
-    real(real64), dimension(N_LATS,N_LONS),intent(in) :: u_wind
-    real(real64), dimension(N_LATS,N_LONS),intent(out) :: tau_PHI
+    real(real64), dimension(:,:),intent(in) :: u_wind
+    real(real64), dimension(:,:),intent(out) :: tau_PHI
     integer(int64) :: i,j
 
     do i = 1,N_LATS
@@ -30,8 +30,8 @@ end subroutine calculate_surface_stress_PHI
 ! Function to calculate the surface stress in THETA direction
 !************************************************************
 subroutine calculate_surface_stress_THETA(v_wind,tau_THETA)
-    real(real64), dimension(N_LATS,N_LONS),intent(in):: v_wind
-    real(real64), dimension(N_LATS,N_LONS),intent(out) :: tau_THETA
+    real(real64), dimension(:,:),intent(in):: v_wind
+    real(real64), dimension(:,:),intent(out) :: tau_THETA
     integer(int64) :: i,j
     do i = 1,N_LATS
         do j = 1,N_LONS
@@ -56,9 +56,9 @@ subroutine calculate_mass_flux_THETA(u_wind,v_wind,land_mask,mass_flux_THETA)
     integer(int64) :: i,j,col_num
     real(real64) :: f
     real(real64), dimension(:,:),allocatable :: tau_PHI,tau_THETA,lats,lats_data
-    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
-    real(real64), dimension(N_LATS,N_LONS),intent(in) :: u_wind,v_wind
-    real(real64), dimension(N_LATS,N_LONS), intent(out) :: mass_flux_THETA
+    integer(int64), dimension(:,:),intent(in) :: land_mask
+    real(real64), dimension(:,:),intent(in) :: u_wind,v_wind
+    real(real64), dimension(:,:), intent(out) :: mass_flux_THETA
 
     allocate(tau_PHI(N_LATS,N_LONS))
     allocate(tau_THETA(N_LATS,N_LONS))
@@ -96,9 +96,9 @@ subroutine calculate_mass_flux_PHI(u_wind,v_wind,land_mask,mass_flux_PHI)
     integer(int64) :: i,j,col_num
     real(real64) :: f
     real(real64), dimension(:,:),allocatable :: tau_PHI,tau_THETA,lats,lats_data
-    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
-    real(real64), dimension(N_LATS,N_LONS),intent(in) :: u_wind, v_wind
-    real(real64), dimension(N_LATS,N_LONS), intent(out) :: mass_flux_PHI
+    integer(int64), dimension(:,:),intent(in) :: land_mask
+    real(real64), dimension(:,:),intent(in) :: u_wind, v_wind
+    real(real64), dimension(:,:), intent(out) :: mass_flux_PHI
 
     allocate(tau_PHI(N_LATS,N_LONS))
     allocate(tau_THETA(N_LATS,N_LONS))
@@ -131,9 +131,9 @@ end subroutine calculate_mass_flux_PHI
 !!****************************************************************************
 subroutine calculate_flow_sv_PHI(u_wind,v_wind,land_mask,sv_flow_PHI)
     integer(int64) :: i,j
-    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
-    real(real64), dimension(N_LATS,N_lONS), intent(in) :: u_wind,v_wind
-    real(real64), dimension(N_LATS,N_lONS), intent(out) :: sv_flow_PHI
+    integer(int64), dimension(:,:),intent(in) :: land_mask
+    real(real64), dimension(:,:), intent(in) :: u_wind,v_wind
+    real(real64), dimension(:,:), intent(out) :: sv_flow_PHI
     real(real64),dimension(:,:),allocatable :: mass_flux_PHI
 
     allocate(mass_flux_PHI(N_LATS,N_LONS))
@@ -154,10 +154,10 @@ end subroutine calculate_flow_sv_PHI
 subroutine calculate_flow_sv_THETA(u_wind,v_wind,land_mask,sv_flow_THETA)
     integer(int64) :: i,j,col_num
     real(real64) :: theta
-    integer(int64), dimension(N_LATS,N_LONS),intent(in) :: land_mask
-    real(real64), dimension(N_LATS,N_lONS), intent(in) :: u_wind,v_wind
+    integer(int64), dimension(:,:),intent(in) :: land_mask
+    real(real64), dimension(:,:), intent(in) :: u_wind,v_wind
     real(real64), dimension(:,:), allocatable :: lats_data,lats,mass_flux_THETA
-    real(real64), dimension(N_LATS,N_lONS),intent(out) :: sv_flow_THETA
+    real(real64), dimension(:,:),intent(out) :: sv_flow_THETA
 
     allocate(lats(N_LATS,1))
     allocate(lats_data(N_LATS,2))

@@ -82,7 +82,7 @@ end subroutine calculate_matrix
 ! to ensure an energy exchange between the layers. 1.0/(RHO_WATER*C_V*H_S) prefactor converts a flux in W/m2 to K/s
 !**********************************************************************************************************************
 subroutine calculate_vector_f(T,f_f)!,B)
-    real(real64),dimension(2,N_LATS,N_LONS),intent(in) :: T
+    real(real64),dimension(:,:,:),intent(in) :: T
     !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
     real(real64), dimension(:,:),allocatable :: F_a,F_c
     real(real64), dimension(:),allocatable :: vec_data

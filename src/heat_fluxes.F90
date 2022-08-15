@@ -17,8 +17,8 @@ contains
 subroutine calc_Q_flux(T,upward_Q_flux)
     real(real64), dimension(:,:), allocatable :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up
     integer(int64) :: i,j
-    real(real64), dimension(2,N_LATS,N_LONS), intent(in) :: T
-    real(real64), dimension(N_LATS,N_LONS), intent(out) :: upward_Q_flux
+    real(real64), dimension(:,:,:), intent(in) :: T
+    real(real64), dimension(:,:), intent(out) :: upward_Q_flux
 
     allocate(F_net_sw_down(N_LATS,N_LONS),F_lw_down(N_LATS,N_LONS),F_latent_up(N_LATS,N_LONS),F_sensible_up(N_LATS,N_LONS))
 
@@ -69,8 +69,8 @@ end subroutine calculate_F_a
 !***************************************************************************
 subroutine calculate_F_c(T,F_c)
     integer(int64) :: i,j
-    real(real64), dimension(N_LATS,N_LONS),intent(out):: F_c
-    real(real64), dimension(2,N_LATS,N_LONS), intent(in) :: T
+    real(real64), dimension(:,:),intent(out):: F_c
+    real(real64), dimension(:,:,:), intent(in) :: T
     ! h = 1 surface
     ! h = 2 deep
     do i=1,N_LATS
