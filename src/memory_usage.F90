@@ -1,6 +1,13 @@
-subroutine system_mem_usage(valueRSS)
+module memory_usage
 use ifport !if on intel compiler
 implicit none
+public :: system_mem_usage
+private
+
+contains
+
+subroutine system_mem_usage(valueRSS)
+
 integer, intent(out) :: valueRSS
 
 character(len=200):: filename='matrix_calc.F90'
@@ -38,3 +45,6 @@ close(100)
 
 return
 end subroutine system_mem_usage
+
+end module
+
