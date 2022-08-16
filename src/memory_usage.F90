@@ -1,11 +1,11 @@
 subroutine system_mem_usage(valueRSS)
-implicit none
 use ifport !if on intel compiler
+implicit none
 integer, intent(out) :: valueRSS
 
-character(len=200):: filename=' '
+character(len=200):: filename='matrix_calc.F90'
 character(len=80) :: line
-character(len=8)  :: pid_char=' '
+character(len=8)  :: pid_char='matrix_calc'
 integer :: pid
 logical :: ifxst
 
