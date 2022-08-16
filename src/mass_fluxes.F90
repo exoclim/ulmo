@@ -159,13 +159,13 @@ subroutine calculate_flow_sv_THETA(u_wind,v_wind,land_mask,sv_flow_THETA)
     real(real64), dimension(:,:), allocatable :: lats_data,lats,mass_flux_THETA
     real(real64), dimension(:,:),intent(out) :: sv_flow_THETA
 
-    allocate(lats(N_LATS,1))
-    allocate(lats_data(N_LATS,2))
+    allocate(lats(N_LATS,1)) ! This can be converted to a grid input
+    allocate(lats_data(N_LATS,2)) ! This can be converted to a grid input
     allocate(mass_flux_THETA(N_LATS,N_LONS))
 
     col_num = 2
-    lats_data = read_file_real(LATS_FILE,N_LATS,col_num)
-    lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
+    lats_data = read_file_real(LATS_FILE,N_LATS,col_num) ! This can be converted to a grid input
+    lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points ! This can be converted to a grid input
 
     call calculate_mass_flux_THETA(u_wind,v_wind,land_mask,mass_flux_THETA)
 
