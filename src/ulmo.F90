@@ -4,6 +4,7 @@ program ULMO
     use NAMELIST
     use MATRIX_CALC
     use fgsl
+    use memory_usage
     !use time_stepper
     use process_output_data
     use, intrinsic :: iso_fortran_env
@@ -78,11 +79,11 @@ T(2,:,:) = T_deep
 !ti = 3
 !time = (ti+1)*DELTA_T
 
-do ti = 1,n_times
-    call calculate_new_T(T)
-    T_surf_out(ti,1) = sum(T(1,:,:))/(144*90)
-end do
-print*, T_surf_out
+!do ti = 1,n_times
+!    call calculate_new_T(T)
+!    T_surf_out(ti,1) = sum(T(1,:,:))/(144*90)
+!end do
+!print*, T_surf_out
 !call write_file('output_data/ProCb/T_surf.dat',T_surf_out,n_times,1_int64)
 
 
@@ -108,6 +109,9 @@ print*, T_surf_out
 !    end if
 !
 !end do
+
+!!! MEMORY CHECKING !!!
+call system_mem_usage(1)
 
 
 deallocate(T,T_surf,T_deep,T_surf_out)
