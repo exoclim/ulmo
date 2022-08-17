@@ -1,58 +1,185 @@
 program ULMO
-    use MASS_FLUX
-    use READ_DATA
-    use NAMELIST
-    use MATRIX_CALC
+    use MASS_FLUX, only: calculate_surface_stress_PHI,calculate_surface_stress_THETA,calculate_flow_sv_THETA &
+    ,calculate_mass_flux_THETA,calculate_mass_flux_PHI,calculate_flow_sv_PHI
+    use READ_DATA, only: read_file_real,read_file_int,write_file
+    use Constants
+    use heat_fluxes, only: calc_Q_flux,calculate_F_a,calculate_F_c
+    use MATRIX_CALC, only: calculate_matrix_index,calculate_matrix,calculate_vector_f_values
     use fgsl
-    use memory_usage
+    !use memory_usage
     !use time_stepper
-    use process_output_data
+    !use process_output_data
     use, intrinsic :: iso_fortran_env
 implicit none
 !*********************
 !! ULMO MAIN SCRIPT !!
 !*********************
-!!! Matrix calculation testing !!! ****WORKS****
-!! Mass flux testing !!
-!real(real64), dimension(:,:),allocatable :: u_wind,v_wind,sv_flow_phi,sv_flow_theta
-!integer(int64), dimension(:,:), allocatable :: land_mask
+
+!**Mass flux variables**!
+real(real64), dimension(:,:),allocatable :: u_wind,v_wind,tau_PHI,tau_THETA,lats,lats_data,mass_flux_THETA &
+                                            ,mass_flux_PHI,sv_flow_PHI,sv_flow_THETA
+integer(int64), dimension(:,:), allocatable :: land_mask
+
+!**Heat flux variables**!
+real(real64), dimension(:,:), allocatable :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up
+real(real64), dimension(:,:,:), allocatable :: T
+real(real64), dimension(:,:), allocatable :: upward_Q_flux, F_a, F_c
+real(real64), dimension(:,:), allocatable :: T_surf_init,T_deep_init
+
+!**Matrix/Vector fgsl variables**!
+type(fgsl_spmatrix) :: A,C
+integer(fgsl_size_t), parameter :: n = 25920
+real(fgsl_double),dimension(:),allocatable :: f_f,u_f
+type(fgsl_vector) :: f,u
+integer(int64) :: h,i,j
+real(fgsl_double):: residual
+integer(fgsl_int) :: status
+integer(fgsl_size_t) :: iter = 0
+!real(fgsl_double), parameter :: tol = 1.0e-6
+type(fgsl_splinalg_itersolve_type), parameter :: S = fgsl_splinalg_itersolve_gmres
+type(fgsl_splinalg_itersolve) :: work
+
+!**Calculating surface stresses from u and v wind**!
+
+allocate(u_wind(N_LATS,N_LONS),v_wind(N_LATS,N_LONS),tau_PHI(N_LATS,N_LONS),tau_THETA(N_LATS,N_LONS))
+
+u_wind = read_file_real(U_WIND_DATA,N_LATS,N_LONS)
+v_wind = read_file_real(V_WIND_DATA,N_LATS,N_LONS)
+
+call calculate_surface_stress_PHI(u_wind,tau_PHI)
+call calculate_surface_stress_THETA(v_wind,tau_THETA)
+
+deallocate(u_wind,v_wind)
+
+!**Calculating mass fluxes from surface stresses**!
+
+allocate(land_mask(N_LATS,N_LONS),lats_data(N_LATS,2),lats(N_LATS,1),mass_flux_THETA(N_LATS,N_LONS),mass_flux_PHI(N_LATS,N_LONS))
+
+lats_data = read_file_real(LATS_FILE,N_LATS,2_int64)
+lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
+
+deallocate(lats_data)
+
+call calculate_mass_flux_THETA(lats,tau_PHI,tau_THETA,land_mask,mass_flux_THETA)
+call calculate_mass_flux_PHI(lats,tau_PHI,tau_THETA,land_mask,mass_flux_PHI)
+
+deallocate(tau_PHI,tau_THETA)
+
+!**Calculating mass flux in Sverdrups**!!
+
+allocate(sv_flow_PHI(N_LATS,N_LONS),sv_flow_THETA(N_LATS,N_LONS))
+
+call calculate_flow_sv_PHI(mass_flux_PHI,sv_flow_PHI)
+call calculate_flow_sv_THETA(lats,mass_flux_THETA,sv_flow_THETA)
+
+!**Writing mass flux initial output to files**!
+
+call write_file('output_data/sv_flow_PHI_init.dat',sv_flow_PHI,N_LATS,N_LONS)
+call write_file('output_data/sv_flow_Theta_init.dat',sv_flow_THETA,N_LATS,N_LONS)
+
+!**Heat flux calculations**!
+
+allocate(F_net_sw_down(N_LATS,N_LONS),F_lw_down(N_LATS,N_LONS),F_latent_up(N_LATS,N_LONS),F_sensible_up(N_LATS,N_LONS))
+allocate(T(2,N_LATS,N_LONS))
+allocate(upward_Q_flux(N_LATS,N_LONS),F_a(N_LATS,N_LONS),F_c(N_LATS,N_LONS))
+allocate(T_surf_init(N_LATS,N_LONS),T_deep_init(N_LATS,N_LONS))
+
+
+F_net_sw_down = read_file_real(SW_FLUX_NET_DOWN_DATA,N_LATS,N_LONS)
+F_lw_down     = read_file_real(LW_FLUX_DOWN_DATA,N_LATS,N_LONS)
+F_latent_up   = read_file_real(LATENT_UP_FLUX_DATA,N_LATS,N_LONS)
+F_sensible_up = read_file_real(SENSIBLE_UP_FLUX_DATA,N_LATS,N_LONS)
+T_surf_init   = read_file_real(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
+T_deep_init   = read_file_real(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
+T(1,:,:) = T_surf_init(:,:)
+T(2,:,:) = T_deep_init(:,:)
+
+deallocate(T_surf_init,T_deep_init)
+
+print*,'T_init = ', T(1,1,1)
+
+call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
+call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a) ! Only depends on um inputs
+
+call calculate_F_c(T,F_c)
+
+!**Calculating Matrix**!
+
+call calculate_matrix(A) ! allocated using subroutine
+C = fgsl_spmatrix_compcol(A) ! compressed column format
+
+!**Calcualting vector f**!
+allocate(f_f(n))
+call calculate_vector_f_values(T,f_f,F_a,F_c)
+f = fgsl_vector_init(f_f) ! allocating and initialising vector f
+!print*,f_f ! This works!
+
+!**Calculating vector u**!
+allocate(u_f(n))
+!initial guess x = 0
+u_f = 0.
+u = fgsl_vector_init(u_f)
+
+
+! solving eqaution Au = f using fgsl
+
+work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
+
+do
+    status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
+
+     !print out residual norm ||A*x-b||
+    residual = fgsl_splinalg_itersolve_normr(work)
+    !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
+
+    if (status == FGSL_SUCCESS) then
+    !    write(output_unit, '(A)') 'Converged'
+    endif
+    iter = iter + 1
+    if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
+end do
+
+!   output solution !
+
+do h = 0,N_DEPTHS-1
+    do i = 0, N_LATS-1
+        do j = 0,N_LONS-1
+            T(h+1,i+1,j+1) =  u_f(calculate_matrix_index(j,i,h)+1)
+        end do
+    end do
+end do
+
+print*,'T_new =',T(1,1,1)
+
+
+deallocate(f_f,u_f)
+call fgsl_vector_free(f) ! deallocate vector
+call fgsl_spmatrix_free(A) ! deallocated matrix
+deallocate(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
+deallocate(T)
+deallocate(upward_Q_flux,F_a,F_c)
+deallocate(mass_flux_PHI,mass_flux_THETA,land_mask,lats,sv_flow_PHI,sv_flow_THETA)
+
+
 !
-!allocate(u_wind(N_LATS,N_LONS),v_wind(N_LATS,N_LONS),land_mask(N_LATS,N_LONS),sv_flow_phi(N_LATS,N_LONS)&
-!,sv_flow_theta(N_LATS,N_LONS))
+!integer(int64) :: n_times ! time stepper testing
+!!real(fgsl_double),dimension(:),target,allocatable :: f_f ! vector testing
+!!type(fgsl_vector) :: f ! vector testing
+!!integer(fgsl_size_t),parameter:: n = 25920 ! vector testing
+!real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new ! timestepper testing
+!integer(int64) :: ti ! time stepper testing
 !
-!u_wind = read_file_real(U_WIND_DATA,N_LATS,N_LONS)
-!v_wind = read_file_real(V_WIND_DATA,N_LATS,N_LONS)
-!land_mask = read_file_int(LAND_MASK_DATA,N_LATS,N_LONS)
+!n_times = 20
 !
-!call calculate_flow_sv_PHI(u_wind,v_wind,land_mask,sv_flow_phi)
-!call calculate_flow_sv_THETA(u_wind,v_wind,land_mask,sv_flow_theta)
+!allocate(T(2,N_LATS,N_LONS),T_surf(N_LATS,N_LONS),T_deep(N_LATS,N_LONS),T_surf_out(n_times,1))
 !
-!call write_file('output_data/sv_flow_Phi.dat',sv_flow_phi,N_LATS,N_LONS)
-!call write_file('output_data/sv_flow_Theta.dat',sv_flow_theta,N_LATS,N_LONS)
+!!allocate(f_f(n)) ! vector testing
 !
-!deallocate(u_wind,v_wind,land_mask,sv_flow_phi,sv_flow_theta)
-
-real(real64),dimension(:,:,:),allocatable :: T
-real(real64), dimension(:,:),allocatable :: T_surf,T_deep,T_surf_out
-
-integer(int64) :: n_times ! time stepper testing
-!real(fgsl_double),dimension(:),target,allocatable :: f_f ! vector testing
-!type(fgsl_vector) :: f ! vector testing
-!integer(fgsl_size_t),parameter:: n = 25920 ! vector testing
-real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new ! timestepper testing
-integer(int64) :: ti ! time stepper testing
-
-n_times = 20
-
-allocate(T(2,N_LATS,N_LONS),T_surf(N_LATS,N_LONS),T_deep(N_LATS,N_LONS),T_surf_out(n_times,1))
-
-!allocate(f_f(n)) ! vector testing
-
-T_surf= read_file_real(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
-T_deep= read_file_real(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
-
-T(1,:,:) = T_surf
-T(2,:,:) = T_deep
+!T_surf= read_file_real(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
+!T_deep= read_file_real(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
+!
+!T(1,:,:) = T_surf
+!T(2,:,:) = T_deep
 
 !! Calculate_matrix !! ****WORKS****
 !lat = 1
@@ -111,10 +238,10 @@ T(2,:,:) = T_deep
 !end do
 
 !!! MEMORY CHECKING !!!
-call system_mem_usage(1)
+!call system_mem_usage(1)
 
 
-deallocate(T,T_surf,T_deep,T_surf_out)
+!deallocate(T,T_surf,T_deep,T_surf_out)
 
 
 

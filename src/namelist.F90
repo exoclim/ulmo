@@ -1,7 +1,7 @@
 !*********************************************************************************
 ! This Module contains all of the planetary constants and file names for the model
 !*********************************************************************************
-module NAMELIST
+module Constants
 use, intrinsic :: iso_fortran_env
 use fgsl
 implicit none
@@ -40,7 +40,7 @@ private
   real(real64), parameter,public  :: DATA_OUTPUT_FREQ = 100.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! output frequency in seconds, but first term is number of days
   real(real64), parameter,public  :: TIME_OUTPUT_TOL = 1e-6 ! days
   real(real64), parameter,public  :: T_OFFSET = 0.0 ! IF you want to restart run, specify start time here, so it doesn't save over stuff, and change input temp files to output ones
-  real(real64), parameter,public  :: TOL = 1e-6
+  real(fgsl_double), parameter,public  :: TOL = 1e-6
   integer(fgsl_size_t), parameter,public  :: MAX_ITER = 100
   real(real64), parameter,public  :: pi = 4*atan(1.)
   integer(int64),parameter,public :: N_DEPTHS = 2 ! 1 deep and 1 surface layer
@@ -75,4 +75,4 @@ private
   character(len=50),parameter,public  :: OUTPUT_Y_MASS_FLUX_DATA = "output_data/ProCb/northward_flow_"
   character(len=50),parameter,public  :: OUTPUT_VERITCAL_FLUX_DATA = "output_data/ProCb/vertical_mass_flux_"
   character(len=50),parameter,public  :: OUTPUT_DATA_EXT = "_days.dat"
-end module NAMELIST
+end module Constants

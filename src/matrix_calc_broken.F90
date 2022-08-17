@@ -2,18 +2,20 @@
 ! Module for Matrix calculations using fgsl
 !******************************************
 module MATRIX_CALC
-use Constants
-use DEGREE_TO_RADIAN, only: deg_to_rad
-use heat_fluxes, only: calculate_F_c,calc_Q_flux
-use HEIGHT_OF_SLAB, only: h_slab
+use NAMELIST
+use DEGREE_TO_RADIAN
+use READ_DATA
+use heat_fluxes
+use HEIGHT_OF_SLAB
 use fgsl
+use dA_da
+use div_m
 use, intrinsic :: iso_fortran_env
 implicit none
-public :: calculate_matrix , calculate_vector_f_values,calculate_matrix_index !, calculate_new_T
+public :: calculate_matrix , calculate_vector_f , calculate_new_T
 private
 
 contains
-
 !********************************************************************************
 ! Calculates the index for the matrix used in the solver, before being compressed
 !********************************************************************************
@@ -24,7 +26,7 @@ function calculate_matrix_index(lon,lat,height) result(ans)
     ans = (height)*N_LATS*N_LONS+(lat)*N_LONS+lon
 end function
 !*****************************************************************************************************************************
-! At maximum or minimum latitude, the adjacent latitude point above or bellow, respectively, is located at the same latitude,
+! At maximum or minimum latitutde, the adjacent latitude point above or bellow, respectively, is located at the same latitude,
 ! but at the new longitudinal point (from lon to new_lon)
 !******************************************************************************************************************************
 function calculate_new_lon(lon) result(new_lon)
@@ -80,29 +82,29 @@ end subroutine calculate_matrix
 ! calculates and sets the vector b in matrix Ax=b. EMISSIVITY*SIGMA*T^4 is a blackbody emission from one of the layers,
 ! to ensure an energy exchange between the layers. 1.0/(RHO_WATER*C_V*H_S) prefactor converts a flux in W/m2 to K/s
 !**********************************************************************************************************************
-subroutine calculate_vector_f_values(T,f_f,F_a,F_c)!,B)
+subroutine calculate_vector_f(T,f_f)!,B)
     real(real64),dimension(:,:,:),intent(in) :: T
     !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
-    real(real64), dimension(:,:),intent(in) :: F_a,F_c
-    !real(real64), dimension(:),allocatable :: vec_data
+    real(real64), dimension(:,:),allocatable :: F_a,F_c
+    real(real64), dimension(:),allocatable :: vec_data
     real(real64) :: depth,b_hij
     integer(int64) :: h,i ,j,SURFACE,DEEP
     ! fgsl !
-    !integer(fgsl_size_t), parameter :: n = 25920
+    integer(fgsl_size_t), parameter :: n = 25920
     real(fgsl_double),dimension(:),intent(out) :: f_f
     integer(fgsl_size_t) :: vec_index !,size_vec
     real(fgsl_double) :: vec_val
     !type(fgsl_vector),intent(out) :: f
 
-    !allocate(F_c(N_LATS,N_LONS),F_a(N_LATS,N_LONS),vec_data(n))
+    allocate(F_c(N_LATS,N_LONS),F_a(N_LATS,N_LONS),vec_data(n))
 
     SURFACE = 1 ! position in 3D temperatures array (1,:,:)
     DEEP = 2    ! position in 3D temperatures array (2,:,:)
 
     !b_hij = 0.0
 
-    !call calculate_F_a()
-    !call calculate_F_c(T,F_c)
+    call calculate_F_a(F_a)
+    call calculate_F_c(T,F_c)
 
     !testing (works)!
 !    h = 2
@@ -128,7 +130,7 @@ subroutine calculate_vector_f_values(T,f_f,F_a,F_c)!,B)
                 !print*,b_hij
 
                 vec_index = (h-1)*N_LATS*N_LONS+(i-1)*N_LONS+(j-1) ! fgsl index
-                !vec_data(vec_index+1) = b_hij ! needs fortran index
+                vec_data(vec_index+1) = b_hij ! needs fortran index
                 !print*, vec_index
                 vec_val = b_hij ! making sure the type is fgsl_size_t
                 !print*, vec_val
@@ -143,123 +145,122 @@ subroutine calculate_vector_f_values(T,f_f,F_a,F_c)!,B)
 
 !print*, 'vec = ',v
 !f = fgsl_vector_init(f_f)
- !   deallocate(F_a,F_c,vec_data)
+    deallocate(F_a,F_c,vec_data)
 !size_vec =  fgsl_vector_get_size(B)
 !print*, 'size=', size_vec
 
 
-end subroutine calculate_vector_f_values
-!!!**************************************************************
-!!! Subroutine that uses FGSL sparse linear algebra to solve Ax=b
-!!!**************************************************************
-!subroutine calculate_new_T(A,f_f,C,T)
-!
-!    real(real64), dimension(:,:,:), intent(inout) :: T
-!    !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
-!    integer(int64) :: h,i,j
-!    ! fgsl !
-!    !type(fgsl_spmatrix),intent(in):: C
-!    real(fgsl_double):: residual
-!    integer(fgsl_size_t),parameter:: n = 25920
-!    !integer(fgsl_size_t) :: size_vec
-!    integer(fgsl_int) :: status
-!    integer(fgsl_size_t) :: iter = 0
-!    real(fgsl_double), parameter :: tol = 1.0e-6
-!    type(fgsl_vector) :: u,f
-!    type(fgsl_splinalg_itersolve_type), parameter :: S = fgsl_splinalg_itersolve_gmres
-!    type(fgsl_splinalg_itersolve) :: work
-!    !real(fgsl_double),dimension(:),intent(in) :: u_f,f_f
-!
-! !   solving equation: Au = f
-!
-!
-!    !A = fgsl_spmatrix_alloc(n,n)
-!    !allocate(u_f(n),f_f(n))
-!
-!
-!
-!    work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
-!
-!    ! initializing vector u
-!    !u = fgsl_vector_init(u_f)
-!
-!    ! vector check !
-!    !size_vec =  fgsl_vector_get_size(u)
-!    !print*, 'size of u =', size_vec
-!    !print*,'vector u= ', u_f
-!
-!
-!
-!    !f = fgsl_vector_init(f_f)
-!
-!    !call calculate_vector_f_values(T,f_f)
-!
-!
-!
-!    ! vector check !
-!    !print*,'f vector=',f_f
-!    !size_vec =  fgsl_vector_get_size(f)
-!    !print*, 'size of f=', size_vec
-!
-!
-!    !call calculate_matrix(A)
-!    ! Matrix check !
-!!    do i = 0_fgsl_size_t,25919_fgsl_size_t
-!!        print*, fgsl_spmatrix_get(A,i,i) ! These should all be 1
-!!        print*, fgsl_spmatrix_get(A,i,2_fgsl_size_t) ! These should all be 0 except 2,2
-!!    end do
-!
-!    !C = fgsl_spmatrix_compcol(A) ! compressed column format
-!    ! Matrix check !
-!!    do i = 0_fgsl_size_t,25919_fgsl_size_t
-!!        print*, fgsl_spmatrix_get(C,i,i) ! These should all be 1
-!!        print*, fgsl_spmatrix_get(C,i,2_fgsl_size_t) ! These should all be 0 except 2,2
-!!    end do
-!
-!
-!!    !initial guess x = 0
-!    !u_f = 0
-!
-!    do
-!        status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
-!
-!         !print out residual norm ||A*x-b||
-!        residual = fgsl_splinalg_itersolve_normr(work)
-!        !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
-!
-!        if (status == FGSL_SUCCESS) then
-!        !    write(output_unit, '(A)') 'Converged'
-!        endif
-!        iter = iter + 1
-!        if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
-!    end do
-!
-!!   output solution !
-!
-!    do h = 1,N_DEPTHS
-!        do i = 1, N_LATS
-!            do j = 1,N_LONS
-!                T(h,i,j) =  u_f(h*N_LATS*N_LONS+(i*N_LONS)+j)
-!            end do
-!        end do
-!    end do
-!
-!    !print*,'T_new(1,1,1) = ',T_new(1,1,1)
-!    !print*,'T_old(1,1,1)=', T(1,1,1)
-!
-!    deallocate(u_f,f_f)
-!    call fgsl_splinalg_itersolve_free(work)
-!    call fgsl_spmatrix_free(A)
-!    call fgsl_spmatrix_free(C)
-!    call fgsl_vector_free(f)
-!    call fgsl_vector_free(u)
-!
-!
-!
-!
-!
-!end subroutine
+end subroutine calculate_vector_f
+!!**************************************************************
+!! Subroutine that uses FGSL sparse linear algebra to solve Ax=b
+!!**************************************************************
+subroutine calculate_new_T(T)
 
+    real(real64), dimension(:,:,:), intent(inout) :: T
+    !integer(int64), dimension(N_LATS,N_LONS), intent(in) :: land_mask
+    integer(int64) :: h,i,j
+    ! fgsl !
+    type(fgsl_spmatrix):: A,C
+    real(fgsl_double):: residual
+    integer(fgsl_size_t),parameter:: n = 25920
+    !integer(fgsl_size_t) :: size_vec
+    integer(fgsl_int) :: status
+    integer(fgsl_size_t) :: iter = 0
+    real(fgsl_double), parameter :: tol = 1.0e-6
+    type(fgsl_vector) :: u,f
+    type(fgsl_splinalg_itersolve_type), parameter :: S = fgsl_splinalg_itersolve_gmres
+    type(fgsl_splinalg_itersolve) :: work
+    real(fgsl_double),dimension(:),target,allocatable :: u_f,f_f
+
+ !   solving equation: Au = f
+
+
+    !A = fgsl_spmatrix_alloc(n,n)
+    allocate(u_f(n),f_f(n))
+
+
+
+    work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
+
+    ! initializing vector u
+    u = fgsl_vector_init(u_f)
+
+    ! vector check !
+    !size_vec =  fgsl_vector_get_size(u)
+    !print*, 'size of u =', size_vec
+    !print*,'vector u= ', u_f
+
+
+
+    f = fgsl_vector_init(f_f)
+
+    call calculate_vector_f(T,f_f)
+
+
+
+    ! vector check !
+    !print*,'f vector=',f_f
+    !size_vec =  fgsl_vector_get_size(f)
+    !print*, 'size of f=', size_vec
+
+
+    call calculate_matrix(A)
+    ! Matrix check !
+!    do i = 0_fgsl_size_t,25919_fgsl_size_t
+!        print*, fgsl_spmatrix_get(A,i,i) ! These should all be 1
+!        print*, fgsl_spmatrix_get(A,i,2_fgsl_size_t) ! These should all be 0 except 2,2
+!    end do
+
+    C = fgsl_spmatrix_compcol(A) ! compressed column format
+    ! Matrix check !
+!    do i = 0_fgsl_size_t,25919_fgsl_size_t
+!        print*, fgsl_spmatrix_get(C,i,i) ! These should all be 1
+!        print*, fgsl_spmatrix_get(C,i,2_fgsl_size_t) ! These should all be 0 except 2,2
+!    end do
+
+
+!    !initial guess x = 0
+    u_f = 0
+
+    do
+        status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
+
+         !print out residual norm ||A*x-b||
+        residual = fgsl_splinalg_itersolve_normr(work)
+        !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
+
+        if (status == FGSL_SUCCESS) then
+        !    write(output_unit, '(A)') 'Converged'
+        endif
+        iter = iter + 1
+        if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
+    end do
+
+!   output solution !
+
+    do h = 1,N_DEPTHS
+        do i = 1, N_LATS
+            do j = 1,N_LONS
+                T(h,i,j) =  u_f(h*N_LATS*N_LONS+(i*N_LONS)+j)
+            end do
+        end do
+    end do
+
+    !print*,'T_new(1,1,1) = ',T_new(1,1,1)
+    !print*,'T_old(1,1,1)=', T(1,1,1)
+
+    deallocate(u_f,f_f)
+    call fgsl_splinalg_itersolve_free(work)
+    call fgsl_spmatrix_free(A)
+    call fgsl_spmatrix_free(C)
+    call fgsl_vector_free(f)
+    call fgsl_vector_free(u)
+
+
+
+
+
+end subroutine
 
 
 end module MATRIX_CALC

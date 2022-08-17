@@ -2,7 +2,7 @@
 ! Returns the height of a layer given index h
 !********************************************
 module HEIGHT_OF_SLAB
-use NAMELIST
+use Constants
 use fgsl
 use, intrinsic :: iso_fortran_env
 implicit none

@@ -2,7 +2,7 @@
 ! This module takes a angle in degrees and converts to radians
 !*************************************************************
 module DEGREE_TO_RADIAN
-use NAMELIST
+use Constants
 use, intrinsic :: iso_fortran_env
 implicit none
 public :: deg_to_rad
