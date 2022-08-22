@@ -147,7 +147,7 @@ f = fgsl_vector_init(f_f)
 u = fgsl_vector_init(u_f)
 u_f = 0.
 !**Calculating Matrix**!
-
+!A = fgsl_spmatrix_alloc(n,n)
 call calculate_matrix(A) ! allocated using subroutine
 C = fgsl_spmatrix_compcol(A) ! compressed column format
 
@@ -181,7 +181,7 @@ work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
 do
     status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
 
-     !print out residual norm ||A*x-b||
+    ! print out residual norm ||A*x-b||
     residual = fgsl_splinalg_itersolve_normr(work)
     !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
 
@@ -215,6 +215,7 @@ Rss_data(n_times+4) = valueRSS
 !deallocate(f_f,u_f) ! maybe could move this allocate statement
 call fgsl_vector_free(f) ! deallocate vector
 call fgsl_spmatrix_free(A) ! deallocated matrix
+call fgsl_spmatrix_free(C)
 deallocate(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
 deallocate(T,M)
 deallocate(land_mask)
