@@ -6,6 +6,7 @@ program ULMO
     use heat_fluxes, only: calc_Q_flux,calculate_F_a,calculate_F_c
     use MATRIX_CALC, only: calculate_matrix_index,calculate_matrix,calculate_vector_f_values
     use fgsl
+    use memory_usage
     !use memory_usage
     !use time_stepper
     !use process_output_data
@@ -19,6 +20,7 @@ implicit none
 real(real64), dimension(:,:),allocatable :: u_wind,v_wind,tau_PHI,tau_THETA,lats,lats_data,mass_flux_THETA &
                                             ,mass_flux_PHI,sv_flow_PHI,sv_flow_THETA
 integer(int64), dimension(:,:), allocatable :: land_mask
+real(real64), dimension(:,:,:), allocatable :: M
 
 !**Heat flux variables**!
 real(real64), dimension(:,:), allocatable :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up
@@ -29,7 +31,8 @@ real(real64), dimension(:,:), allocatable :: T_surf_init,T_deep_init
 !**Matrix/Vector fgsl variables**!
 type(fgsl_spmatrix) :: A,C
 integer(fgsl_size_t), parameter :: n = 25920
-real(fgsl_double),dimension(:),allocatable :: f_f,u_f
+!real(fgsl_double),dimension(:),allocatable :: f_f,u_f ! could make these a target
+real(fgsl_double),dimension(1:n),target :: f_f, u_f
 type(fgsl_vector) :: f,u
 integer(int64) :: h,i,j
 real(fgsl_double):: residual
@@ -38,6 +41,19 @@ integer(fgsl_size_t) :: iter = 0
 !real(fgsl_double), parameter :: tol = 1.0e-6
 type(fgsl_splinalg_itersolve_type), parameter :: S = fgsl_splinalg_itersolve_gmres
 type(fgsl_splinalg_itersolve) :: work
+
+!**Time stepping varaibles**!
+integer(int64) :: n_step,n_times
+
+!**Memory usage varaiables**!
+integer :: valueRSS
+real(real64),dimension(:), allocatable :: Rss_data
+
+allocate(Rss_data(30))
+
+call system_mem_usage(valueRSS)
+Rss_data(1) = valueRSS
+write (*,"(a18,i5)") 'valueRSS start =',valueRSS
 
 !**Calculating surface stresses from u and v wind**!
 
@@ -74,8 +90,15 @@ call calculate_flow_sv_THETA(lats,mass_flux_THETA,sv_flow_THETA)
 
 !**Writing mass flux initial output to files**!
 
-call write_file('output_data/sv_flow_PHI_init.dat',sv_flow_PHI,N_LATS,N_LONS)
-call write_file('output_data/sv_flow_Theta_init.dat',sv_flow_THETA,N_LATS,N_LONS)
+!call write_file('output_data/sv_flow_PHI_init.dat',sv_flow_PHI,N_LATS,N_LONS)
+!call write_file('output_data/sv_flow_Theta_init.dat',sv_flow_THETA,N_LATS,N_LONS)
+
+allocate(M(2,N_LATS,N_LONS))
+
+M(1,:,:) = mass_flux_PHI(:,:) !PHI = 1
+M(2,:,:) = mass_flux_THETA(:,:) !THETA = 2
+
+deallocate(mass_flux_PHI,mass_flux_THETA,lats,sv_flow_PHI,sv_flow_THETA)
 
 !**Heat flux calculations**!
 
@@ -96,50 +119,80 @@ T(2,:,:) = T_deep_init(:,:)
 
 deallocate(T_surf_init,T_deep_init)
 
-print*,'T_init = ', T(1,1,1)
+!print*,'T_init = ', T(1,1,1)
 
-call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
+call system_mem_usage(valueRSS)
+write (*,"(a49,i5)") 'valueRSS before allocating vectors and matrix =',valueRSS
+Rss_data(2) = valueRSS
+
 call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a) ! Only depends on um inputs
 
-call calculate_F_c(T,F_c)
+!**Time stepping**!
+n_times = 20
 
+!**Calcualting vector f**!
+
+!allocate(f_f(n)) ! could make these a target
+!call calculate_vector_f_values(T,f_f,F_a,F_c)
+!f = fgsl_vector_init(f_f) ! allocating and initialising vector f
+!print*,f_f ! This works!
+f = fgsl_vector_init(f_f)
+! allocating and initialising vector f
+!call calculate_vector_f_values(T,f_f,F_a,F_c) ! this need to be inside the loop
+
+!**Calculating vector u**!
+
+!allocate(u_f(n)) ! could make these a target
+!initial guess x = 0
+u = fgsl_vector_init(u_f)
+u_f = 0.
 !**Calculating Matrix**!
 
 call calculate_matrix(A) ! allocated using subroutine
 C = fgsl_spmatrix_compcol(A) ! compressed column format
 
-!**Calcualting vector f**!
-allocate(f_f(n))
+
+
+call system_mem_usage(valueRSS)
+write (*,"(a49,i5)") 'valueRSS before time stepping =',valueRSS
+Rss_data(3) = valueRSS
+
+do n_step = 1,n_times
+
+!call system_mem_usage(valueRSS)
+!write(*,"(a40,i5,a1,i6)") 'valueRSS before solving F_c etc',n_step,'=',valueRSS
+!Rss_data(n_step+2) = valueRSS
+
+
+call calculate_F_c(T,F_c)
+call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
 call calculate_vector_f_values(T,f_f,F_a,F_c)
-f = fgsl_vector_init(f_f) ! allocating and initialising vector f
-!print*,f_f ! This works!
-
-!**Calculating vector u**!
-allocate(u_f(n))
-!initial guess x = 0
-u_f = 0.
-u = fgsl_vector_init(u_f)
 
 
-! solving eqaution Au = f using fgsl
+
+call system_mem_usage(valueRSS)
+write(*,"(a40,i5,a1,i6)") 'valueRSS before solving AU=f at n_step',n_step,'=',valueRSS
+Rss_data(n_step+3) = valueRSS
+
+!**Solving eqaution Au = f using fgsl**!
 
 work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
 
-do
-    status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
+!do
+!    status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
+!
+!     !print out residual norm ||A*x-b||
+!    residual = fgsl_splinalg_itersolve_normr(work)
+!    !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
+!
+!    if (status == FGSL_SUCCESS) then
+!        !write(output_unit, '(A)') 'Converged'
+!    endif
+!    iter = iter + 1
+!    if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
+!end do
 
-     !print out residual norm ||A*x-b||
-    residual = fgsl_splinalg_itersolve_normr(work)
-    !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
-
-    if (status == FGSL_SUCCESS) then
-    !    write(output_unit, '(A)') 'Converged'
-    endif
-    iter = iter + 1
-    if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
-end do
-
-!   output solution !
+!**output solution**!
 
 do h = 0,N_DEPTHS-1
     do i = 0, N_LATS-1
@@ -149,16 +202,34 @@ do h = 0,N_DEPTHS-1
     end do
 end do
 
-print*,'T_new =',T(1,1,1)
+!print*,'T_new =',n_step,T(1,1,1)
 
 
-deallocate(f_f,u_f)
+
+end do
+
+call system_mem_usage(valueRSS)
+write (*,"(a31,i5)")  'valueRSS before deallocating =',valueRSS
+Rss_data(n_times+4) = valueRSS
+
+!deallocate(f_f,u_f) ! maybe could move this allocate statement
 call fgsl_vector_free(f) ! deallocate vector
 call fgsl_spmatrix_free(A) ! deallocated matrix
 deallocate(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
-deallocate(T)
+deallocate(T,M)
+deallocate(land_mask)
 deallocate(upward_Q_flux,F_a,F_c)
-deallocate(mass_flux_PHI,mass_flux_THETA,land_mask,lats,sv_flow_PHI,sv_flow_THETA)
+
+!**System memory analysis**!
+call system_mem_usage(valueRSS)
+write (*,"(a16,i5)")  'valueRSS end =',valueRSS
+Rss_data(n_times+5) = valueRSS
+
+call write_file('output_data/rss.dat',Rss_data,n_times+5,1_int64)
+print*, 'rss_size =', n_times+5
+!call system_mem_usage('mass_fluxes.F90','mass_fluxes',valueRSS)
+!print*,'valueRSS mass_fluxes =',valueRSS
+deallocate(Rss_data)
 
 
 !
