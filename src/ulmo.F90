@@ -49,7 +49,7 @@ integer(int64) :: n_step,n_times
 integer :: valueRSS
 real(real64),dimension(:), allocatable :: Rss_data
 
-allocate(Rss_data(30))
+allocate(Rss_data(205))
 
 call system_mem_usage(valueRSS)
 Rss_data(1) = valueRSS
@@ -128,7 +128,7 @@ Rss_data(2) = valueRSS
 call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a) ! Only depends on um inputs
 
 !**Time stepping**!
-n_times = 20
+n_times = 200
 
 !**Calcualting vector f**!
 
@@ -159,9 +159,9 @@ Rss_data(3) = valueRSS
 
 do n_step = 1,n_times
 
-!call system_mem_usage(valueRSS)
-!write(*,"(a40,i5,a1,i6)") 'valueRSS before solving F_c etc',n_step,'=',valueRSS
-!Rss_data(n_step+2) = valueRSS
+call system_mem_usage(valueRSS)
+write(*,"(a40,i5,a1,i6)") 'valueRSS before solving F_c etc',n_step,'=',valueRSS
+Rss_data(n_step+2) = valueRSS
 
 
 call calculate_F_c(T,F_c)
@@ -197,7 +197,7 @@ end do
 do h = 0,N_DEPTHS-1
     do i = 0, N_LATS-1
         do j = 0,N_LONS-1
-            T(h+1,i+1,j+1) =  u_f(calculate_matrix_index(j,i,h)+1)
+            T(h+1,i+1,j+1) = u_f(calculate_matrix_index(j,i,h)+1)
         end do
     end do
 end do
@@ -205,6 +205,7 @@ end do
 !print*,'T_new =',n_step,T(1,1,1)
 
 
+call fgsl_splinalg_itersolve_free(work) !**CRUCIAL THAT THIS STATEMENT IS INSIDE THE LOOP**!
 
 end do
 
@@ -212,7 +213,7 @@ call system_mem_usage(valueRSS)
 write (*,"(a31,i5)")  'valueRSS before deallocating =',valueRSS
 Rss_data(n_times+4) = valueRSS
 
-!deallocate(f_f,u_f) ! maybe could move this allocate statement
+
 call fgsl_vector_free(f) ! deallocate vector
 call fgsl_spmatrix_free(A) ! deallocated matrix
 call fgsl_spmatrix_free(C)
