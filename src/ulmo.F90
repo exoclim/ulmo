@@ -178,19 +178,19 @@ Rss_data(n_step+3) = valueRSS
 
 work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
 
-!do
-!    status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
-!
-!     !print out residual norm ||A*x-b||
-!    residual = fgsl_splinalg_itersolve_normr(work)
-!    !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
-!
-!    if (status == FGSL_SUCCESS) then
-!        !write(output_unit, '(A)') 'Converged'
-!    endif
-!    iter = iter + 1
-!    if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
-!end do
+do
+    status = fgsl_splinalg_itersolve_iterate(C, f, tol, u, work)
+
+     !print out residual norm ||A*x-b||
+    residual = fgsl_splinalg_itersolve_normr(work)
+    !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
+
+    if (status == FGSL_SUCCESS) then
+        !write(output_unit, '(A)') 'Converged'
+    endif
+    iter = iter + 1
+    if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
+end do
 
 !**output solution**!
 
