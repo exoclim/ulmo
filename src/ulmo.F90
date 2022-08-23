@@ -1,3 +1,4 @@
+
 program ULMO
     use MASS_FLUX, only: calculate_surface_stress_PHI,calculate_surface_stress_THETA,calculate_flow_sv_THETA &
     ,calculate_mass_flux_THETA,calculate_mass_flux_PHI,calculate_flow_sv_PHI
@@ -7,10 +8,9 @@ program ULMO
     use MATRIX_CALC, only: calculate_matrix_index,calculate_matrix,calculate_vector_f_values
     use fgsl
     use memory_usage
-    !use memory_usage
-    !use time_stepper
-    !use process_output_data
     use, intrinsic :: iso_fortran_env
+    !**TESTING**!
+    use process_output_data
 implicit none
 !*********************
 !! ULMO MAIN SCRIPT !!
@@ -48,6 +48,12 @@ integer(int64) :: n_step,n_times
 !**Memory usage varaiables**!
 integer :: valueRSS
 real(real64),dimension(:), allocatable :: Rss_data
+
+!**CPU Time varaiables**!
+real(real64) :: start, finish
+real(real64),dimension(:,:),allocatable:: cpu_data
+
+call cpu_time(start)
 
 allocate(Rss_data(205))
 
@@ -97,6 +103,7 @@ allocate(M(2,N_LATS,N_LONS))
 
 M(1,:,:) = mass_flux_PHI(:,:) !PHI = 1
 M(2,:,:) = mass_flux_THETA(:,:) !THETA = 2
+
 
 deallocate(mass_flux_PHI,mass_flux_THETA,lats,sv_flow_PHI,sv_flow_THETA)
 
@@ -157,7 +164,14 @@ call system_mem_usage(valueRSS)
 write (*,"(a49,i5)") 'valueRSS before time stepping =',valueRSS
 Rss_data(3) = valueRSS
 
+call cpu_time(finish)
+print '("CPU time before time stepping = ",f6.3," seconds.")',finish-start
+
+allocate(cpu_data(n_times,1_int64))
+
 do n_step = 1,n_times
+
+call cpu_time(start)
 
 call system_mem_usage(valueRSS)
 write(*,"(a40,i5,a1,i6)") 'valueRSS before solving F_c etc',n_step,'=',valueRSS
@@ -165,7 +179,7 @@ Rss_data(n_step+2) = valueRSS
 
 
 call calculate_F_c(T,F_c)
-call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
+!call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
 call calculate_vector_f_values(T,f_f,F_a,F_c)
 
 
@@ -185,9 +199,9 @@ do
     residual = fgsl_splinalg_itersolve_normr(work)
     !write(output_unit, '(A,I2,A,G15.6)') 'iter ', iter, ' residual = ', residual
 
-    if (status == FGSL_SUCCESS) then
-        !write(output_unit, '(A)') 'Converged'
-    endif
+!    if (status == FGSL_SUCCESS) then
+!        !write(output_unit, '(A)') 'Converged'
+!    endif
     iter = iter + 1
     if (status /= FGSL_CONTINUE .or. iter >= MAX_ITER) exit
 end do
@@ -207,13 +221,21 @@ end do
 
 call fgsl_splinalg_itersolve_free(work) !**CRUCIAL THAT THIS STATEMENT IS INSIDE THE LOOP**!
 
+call cpu_time(finish)
+print '("CPU time at step = ",I6.3,f6.3," seconds.")',n_step,finish-start
+cpu_data(n_step,1) = finish-start
+
 end do
+
 
 call system_mem_usage(valueRSS)
 write (*,"(a31,i5)")  'valueRSS before deallocating =',valueRSS
 Rss_data(n_times+4) = valueRSS
 
+!**TESTING**!
+call process_output(T,upward_Q_flux)
 
+!**Deallocation of Matrices and vectors**!
 call fgsl_vector_free(f) ! deallocate vector
 call fgsl_spmatrix_free(A) ! deallocated matrix
 call fgsl_spmatrix_free(C)
@@ -222,6 +244,7 @@ deallocate(T,M)
 deallocate(land_mask)
 deallocate(upward_Q_flux,F_a,F_c)
 
+
 !**System memory analysis**!
 call system_mem_usage(valueRSS)
 write (*,"(a16,i5)")  'valueRSS end =',valueRSS
@@ -229,12 +252,13 @@ Rss_data(n_times+5) = valueRSS
 
 call write_file('output_data/rss.dat',Rss_data,n_times+5,1_int64)
 print*, 'rss_size =', n_times+5
+
+call write_file('output_data/cpu_data.dat',cpu_data,n_times,1_int64)
 !call system_mem_usage('mass_fluxes.F90','mass_fluxes',valueRSS)
 !print*,'valueRSS mass_fluxes =',valueRSS
 deallocate(Rss_data)
+deallocate(cpu_data)
 
-
-!
 !integer(int64) :: n_times ! time stepper testing
 !!real(fgsl_double),dimension(:),target,allocatable :: f_f ! vector testing
 !!type(fgsl_vector) :: f ! vector testing
