@@ -50,6 +50,7 @@ type(fgsl_splinalg_itersolve) :: work
 
 !**Time stepping varaibles**!
 integer(int64) :: n_step,n_times
+real(real64) :: days,time
 
 !**Memory usage varaiables**!
 integer :: valueRSS
@@ -217,15 +218,25 @@ do n_step = 1,n_times
     print '("CPU time at step = ",I6.3,f6.3," seconds.")',n_step,finish-start
     cpu_data(n_step,1) = finish-start
 
+    !**Outputting data**!
+    time = n_step*DELTA_T
+    if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+        days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
+        !print*, "Days passed =", days,'Avg Surf Temp = ', sum(T(1,:,:))/(144*90)
+        print*, 'Days passed = ', days
+    end if
+
+    if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
+        call process_output(T,upward_Q_flux,time)
+    end if
+
+
 end do
 
 !**SYSTEM ANALYSIS**!
 call system_mem_usage(valueRSS)
 write (*,"(a31,i5)")  'valueRSS before deallocating =',valueRSS
 Rss_data(n_times+4) = valueRSS
-
-!**TESTING**!
-call process_output(T,upward_Q_flux)
 
 !**Deallocation of Matrices and vectors**!
 call fgsl_vector_free(f) ! deallocate vector
@@ -247,86 +258,6 @@ call write_file('output_data/cpu_data.dat',cpu_data,n_times,1_int64)
 deallocate(Rss_data)
 deallocate(cpu_data)
 
-!integer(int64) :: n_times ! time stepper testing
-!!real(fgsl_double),dimension(:),target,allocatable :: f_f ! vector testing
-!!type(fgsl_vector) :: f ! vector testing
-!!integer(fgsl_size_t),parameter:: n = 25920 ! vector testing
-!real(real64) :: time, days !,avg_T_surf_init,avg_T_surf_new ! timestepper testing
-!integer(int64) :: ti ! time stepper testing
-!
-!n_times = 20
-!
-!allocate(T(2,N_LATS,N_LONS),T_surf(N_LATS,N_LONS),T_deep(N_LATS,N_LONS),T_surf_out(n_times,1))
-!
-!!allocate(f_f(n)) ! vector testing
-!
-!T_surf= read_file_real(INITIAL_SURFACE_TEMP_DATA,N_LATS,N_LONS)
-!T_deep= read_file_real(INITIAL_DEEP_TEMP_DATA,N_LATS,N_LONS)
-!
-!T(1,:,:) = T_surf
-!T(2,:,:) = T_deep
-
-!! Calculate_matrix !! ****WORKS****
-!lat = 1
-!lon = 1
-!height =1
-!A = calculate_matrix()
-!print*,'ulmo main print A(1,1):', fgsl_spmatrix_get(A, 1_fgsl_size_t, 1_fgsl_size_t)
-
-
-!! calculate_vector_f !! ****WORKS****
-!f = fgsl_vector_init(f_f)
-!call calculate_vector_f_values(T,f_f)
-!print*, f_f
-!deallocate(f_f)
-!b = fgsl_vector_init(v)
-!print*,'1st value', v(1)
-
-!! calculate_new_T !! ****WORKS****
-!print*, 'T_1(1,1,1) = ', T(1,2,7)
-!call calculate_new_T(T)
-!print*, 'T_2(1,1,1) = ', T(1,2,7)
-!call calculate_new_T(T)
-!print*, 'T_3(1,1,1)=',T(1,2,7)
-!ti = 3
-!time = (ti+1)*DELTA_T
-
-!do ti = 1,n_times
-!    call calculate_new_T(T)
-!    T_surf_out(ti,1) = sum(T(1,:,:))/(144*90)
-!end do
-!print*, T_surf_out
-!call write_file('output_data/ProCb/T_surf.dat',T_surf_out,n_times,1_int64)
-
-
-!! t_stepper !!
-
-
-
-
-    !Grid_vals *grid = xmalloc(sizeof(Grid_vals)) I think thi is unique to c
-    ! need construct grid statement
-    !temperature data
-
-!do ti = 1,n_times
-!    time = (ti+1.)*DELTA_T
-!    call calculate_new_T(T)
-!    if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
-!        days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
-!        print*, "Days passed =", days,'Avg Surf Temp = ', sum(T(1,:,:))/(144*90)
-!    end if
-!
-!    if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
-!        call process_output(T,time)!,M)
-!    end if
-!
-!end do
-
-!!! MEMORY CHECKING !!!
-!call system_mem_usage(1)
-
-
-!deallocate(T,T_surf,T_deep,T_surf_out)
 
 
 
