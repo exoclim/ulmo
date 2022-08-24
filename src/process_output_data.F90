@@ -17,8 +17,9 @@ module process_output_data
 !********************************************************************
 function construct_fname(base,time_str) result(fname)
     character(len=100) :: fname
-    character(len=50), intent(in) :: base,time_str
-    fname = trim(base)//trim(time_str)//trim(OUTPUT_DATA_EXT)
+    character(len=50), intent(in) :: base
+    character(len=6), intent(in) :: time_str
+    fname = trim(base)//trim(time_str)//OUTPUT_DATA_EXT
     !print*,'fname',fname
 end function
 !****************************************************************************
@@ -28,7 +29,8 @@ subroutine write_file_time(base,time_str,array,rows,cols)
     integer(int64), intent(in) :: rows, cols
     real(real64), intent(in),dimension(:,:) :: array
     integer(int64) :: i,j,iu
-    character(len=50), intent(in) :: base,time_str
+    character(len=50), intent(in) :: base
+    character(len=6), intent(in) :: time_str
     character(len=100) :: file_name
 
     file_name = construct_fname(base,time_str)
@@ -45,10 +47,9 @@ end subroutine write_file_time
 !*********************************************
 ! Function that converts a integer to a string
 !*********************************************
-
 function int_to_str(i) result(res)
-  character(len=10) :: res
-  integer,intent(in) :: i
+  character(len=6) :: res
+  integer(int64),intent(in) :: i
   character(range(i)+2) :: tmp
   write(tmp,'(i0)') i
   res = trim(tmp)
@@ -57,15 +58,15 @@ end function
 !**********************************************************
 ! Subroutine to Process the output data for each time stamp
 !**********************************************************
- subroutine process_output(T,upward_Q_flux)!,time)!,M)
+ subroutine process_output(T,upward_Q_flux,time)!,time)!,M)
 
-    real(real64),dimension(:,:,:),intent(in) :: T!,M
+    real(real64),dimension(:,:,:),intent(in) :: T !,M
     !real(real64),dimension(2,N_LATS,N_LONS) :: Sv_flow
-    real(real64),dimension(:,:),intent(IN) :: upward_Q_flux !,Sv_flow_PHI,Sv_flow_THETA,div_M
-!    integer(int64), intent(in) :: time
-!    real(real64) :: days
-!    integer :: day_int,days_int
-!    character(len=50) :: time_str
+    real(real64),dimension(:,:),intent(in) :: upward_Q_flux !,Sv_flow_PHI,Sv_flow_THETA,div_M
+    real(real64) :: days
+    integer(int64) :: days_int
+    character(len=6) :: time_str
+    real(real64), intent(in) :: time
 
 
 !    days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
@@ -76,12 +77,18 @@ end function
 !    !day_int = days_int+TIME_OUTPUT_TOL ! not sure about this !
 !    time_str = int_to_str(day_int)
 !    print*, 'time_str=',time_str
+    days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
+    days = nint(days)
+    print*, 'data outputted at = ', days
+    days_int = int(days)
+    time_str = int_to_str(days_int)
 
+    !**Temperature outputs**!
+    call write_file_time(OUTPUT_DEEP_TEMP_DATA,time_str,T(2,:,:),N_LATS,N_LONS)
+    call write_file_time(OUTPUT_SURFACE_TEMP_DATA,time_str,T(1,:,:),N_LATS,N_LONS)
+    call write_file_time(OUTPUT_UPWARD_Q_FLUX,time_str,upward_Q_flux,N_LATS,N_LONS)
 
-    !call write_file_time(OUTPUT_UPWARD_Q_FLUX,time_str,upward_Q_flux,N_LATS,N_LONS)
-    call write_file('output_data/ProCb/OUTPUT_UPWARD_Q_FLUX.dat',upward_Q_flux,N_LATS,N_LONS)
-    !Sv_flow_PHI = calculate_flow_sv_PHI()
-    !Sv_flow_THETA = calculate_flow_sv_THETA()
+    !**Mass Flux outputs**!
     !call write_file_time(OUTPUT_X_MASS_FLUX_DATA,time_str,Sv_flow_PHI,N_LATS,N_LONS)
     !call write_file_time(OUTPUT_Y_MASS_FLUX_DATA,time_str,Sv_flow_THETA,N_LATS,N_LONS)
 
@@ -93,10 +100,9 @@ end function
 
     !call write_file_time(OUTPUT_VERITCAL_FLUX_DATA,time_str,div_M,N_LATS,N_LONS)
 
-!    call write_file_time(OUTPUT_SURFACE_TEMP_DATA,time_str,T(1,:,:),N_LATS,N_LONS)
-!    call write_file_time(OUTPUT_DEEP_TEMP_DATA,time_str,T(2,:,:),N_LATS,N_LONS)
-    call write_file('output_data/ProCb/OUTPUT_SURFACE_TEMP_DATA.dat',T(1,:,:),N_LATS,N_LONS)
-    call write_file('output_data/ProCb/OUTPUT_DEEP_TEMP_DATA.dat',T(2,:,:),N_LATS,N_LONS)
+!    call write_file('output_data/ProCb/OUTPUT_UPWARD_Q_FLUX.dat',upward_Q_flux,N_LATS,N_LONS)
+!    call write_file('output_data/ProCb/OUTPUT_SURFACE_TEMP_DATA.dat',T(1,:,:),N_LATS,N_LONS)
+!    call write_file('output_data/ProCb/OUTPUT_DEEP_TEMP_DATA.dat',T(2,:,:),N_LATS,N_LONS)
 
 
 

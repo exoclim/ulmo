@@ -47,7 +47,8 @@ private
 !***********************
 ! input data file names
 !***********************
-  character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_no_land.dat"
+  !character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_no_land.dat"
+  character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_day_cont_100_180.dat"
   real(real64)            ,parameter,public  :: MAX_FILE_LINE_SIZE = 4000
   character(len=*),parameter,public  :: SW_FLUX_NET_DOWN_DATA = "input_data/ProCb/surface_net_downward_shortwave_flux.dat"
   character(len=*),parameter,public  :: LW_FLUX_DOWN_DATA = "input_data/ProCb/surface_downwelling_longwave_flux_in_air.dat"
