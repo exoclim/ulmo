@@ -90,7 +90,7 @@ subroutine calculate_vector_f_values(land_mask,T,f_f,F_a,F_c)!,B)
     real(real64), dimension(:,:),intent(in) :: F_a,F_c
     !real(real64), dimension(:),allocatable :: vec_data
     real(real64) :: depth,b_hij
-    integer(int64) :: h,i ,j,SURFACE,DEEP
+    integer(int64) :: h,i ,j
     ! fgsl !
     !integer(fgsl_size_t), parameter :: n = 25920
     real(fgsl_double),dimension(:),intent(out) :: f_f
