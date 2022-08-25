@@ -1,7 +1,0 @@
-name: ulmo
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  - gfortran
-  - fgsl
