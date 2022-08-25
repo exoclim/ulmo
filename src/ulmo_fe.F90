@@ -8,10 +8,12 @@ program ULMO
     use Constants
     use heat_fluxes, only: calc_Q_flux,calculate_F_a,calculate_F_c
     use HEIGHT_OF_SLAB
-    use memory_usage
+    use DEGREE_TO_RADIAN
+    use calc_new_T_fe
     use, intrinsic :: iso_fortran_env
     !**TESTING**!
     use process_output_data
+
 implicit none
 
 !*********************
@@ -26,22 +28,32 @@ real(real64), dimension(:,:,:), allocatable :: M
 !**Land mask and coordinate variables**!
 integer(int64), dimension(:,:), allocatable :: land_mask
 real(real64), dimension(:,:),allocatable :: lats,lats_data
+real(real64) :: d_phi,d_theta,theta,thickness
 
 !**Heat flux variables**!
 real(real64), dimension(:,:), allocatable :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up
-real(real64), dimension(:,:,:), allocatable :: T
+real(real64), dimension(:,:,:), allocatable :: T,T_new
 real(real64), dimension(:,:), allocatable :: upward_Q_flux, F_a, F_c
 real(real64), dimension(:,:), allocatable :: T_surf_init,T_deep_init
 
-!**Forward Euler variables**!
-integer(int64) :: n_times,n_step,h,i,j
-real(real64) :: days,time
+!**Forward Euler/time stepping variables**!
+integer(int64) :: n_times,n_step,h,i,j,version
+real(real64) :: days,time,s_dfsn,s_ekman,s_notrns
 
+!**CPU Time varaiables**!
+!real(real64) :: start, finish
+!real(real64),dimension(:,:),allocatable:: cpu_data
 
-!**Land Mask allocation and load**!
+!call cpu_time(start)
+
+!**Land Mask allocation and load and coords**!
 allocate(land_mask(N_LATS,N_LONS))
 land_mask = read_file_int(LAND_MASK_DATA,N_LATS,N_LONS)
 
+allocate(lats_data(N_LATS,2),lats(N_LATS,1))
+lats_data = read_file_real(LATS_FILE,N_LATS,2_int64)
+lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
+deallocate(lats_data)
 !**Calculating surface stresses from u and v wind**!
 allocate(u_wind(N_LATS,N_LONS),v_wind(N_LATS,N_LONS),tau_PHI(N_LATS,N_LONS),tau_THETA(N_LATS,N_LONS))
 
@@ -54,14 +66,7 @@ call calculate_surface_stress_THETA(v_wind,tau_THETA)
 deallocate(u_wind,v_wind)
 
 !**Calculating mass fluxes from surface stresses**!
-allocate(lats_data(N_LATS,2),lats(N_LATS,1))
-
 allocate(mass_flux_THETA(N_LATS,N_LONS),mass_flux_PHI(N_LATS,N_LONS))
-
-lats_data = read_file_real(LATS_FILE,N_LATS,2_int64)
-lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
-
-deallocate(lats_data)
 
 call calculate_mass_flux_THETA(lats,tau_PHI,tau_THETA,land_mask,mass_flux_THETA)
 call calculate_mass_flux_PHI(lats,tau_PHI,tau_THETA,land_mask,mass_flux_PHI)
@@ -83,7 +88,7 @@ allocate(M(2,N_LATS,N_LONS))
 M(1,:,:) = mass_flux_PHI(:,:) !PHI = 1
 M(2,:,:) = mass_flux_THETA(:,:) !THETA = 2
 
-deallocate(mass_flux_PHI,mass_flux_THETA,lats,sv_flow_PHI,sv_flow_THETA)
+deallocate(mass_flux_PHI,mass_flux_THETA,sv_flow_PHI,sv_flow_THETA)
 
 !**Heat flux calculations**!
 allocate(F_net_sw_down(N_LATS,N_LONS),F_lw_down(N_LATS,N_LONS),F_latent_up(N_LATS,N_LONS),F_sensible_up(N_LATS,N_LONS))
@@ -105,39 +110,83 @@ deallocate(T_surf_init,T_deep_init)
 
 !**Solving using the Forward Euler method**!
 
-n_times = 40000  !Number of time steps, 20 steps = 10 days.
+n_times = TIME_STEPS  !Number of time steps, 20 steps = 10 days.
 
-call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a) ! Only depends on um inputs
+!CONSTANTS-that don't depend on coordinates!
+call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a)
+d_theta = deg_to_rad(DELTA_LAT)
+d_phi = deg_to_rad(DELTA_LON)
+s_dfsn = DELTA_T*D/(R_PLANET)**2
+
+!call cpu_time(finish)
+!print '("CPU time before time stepping = ",f6.3," seconds.")',finish-start
+
+!call cpu_time(start)
+
+print*,'Enter version of ulmo (0,1 or 2):'
+read *,version
 
 do n_step = 1,n_times
 
-!    if(n_step==1) then
-!        write(*,"(a12,i5)") 'Time Step = ', n_step
-!    else
-!        write(*,"(i17)") n_step
-!    end if
+
+    if(n_step==1) then
+        print*,'Starting time stepping. This will take a while!'
+    endif
+
+     time = n_step*DELTA_T
+
+    allocate(T_new(2,N_LATS,N_LONS))
 
     do h = 1,N_DEPTHS
         do i = 1, N_LATS
             do j = 1,N_LONS
+
+                theta = deg_to_rad(lats(i,1))
+                thickness = h_slab(h)
+                s_notrns = DELTA_T/(RHO_WATER*C_V*thickness)
 
                 call calculate_F_c(T,F_c)
                 call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
 
                 if(land_mask(i,j) == 1) then
 
-                    T(h,i,j) = T(h,i,j)
+                    T_new(h,i,j) = T(h,i,j)
 
                 else
+                    !**No transport**!
+                    if(version == 0) then
 
-                    if(h==1) then
-                        T(h,i,j) = (DELTA_T/(RHO_WATER*C_V*h_slab(h)))*(F_a(i,j)+F_c(i,j)+SIGMA*EPSILON*(T(h,i,j))**4) + T(h,i,j)
+                        if(h==1) then
 
-                    elseif(h==2) then
-                        T(h,i,j) = (DELTA_T/(RHO_WATER*C_V*h_slab(h)))*(-F_c(i,j))+T(h,i,j)
+                            call calc_new_T_surf_notrns(T,i,j,h,s_notrns,F_c,F_a,T_new)
 
-                    else
-                        print*, 'Index h is out of range'
+                        elseif(h==2) then
+
+                            call calc_new_T_deep_notrns(T,i,j,h,s_notrns,F_c,T_new)
+
+                        else
+                            print*, 'Index h is out of range'
+
+                        end if
+
+                    !**Diffusion**!
+                    elseif(version==1) then
+
+                        if(h==1) then
+
+                            call calc_new_T_surf_diff(T,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,F_c,F_a,theta,T_new)
+
+                        elseif(h==2) then
+
+                            call calc_new_T_deep_diff(T,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,F_c,theta,T_new)
+
+                        else
+
+                            print*, 'Index h is out of range'
+
+                        end if
+
+                    !**Diffusion and Ekman trasnport**!
 
                     end if
 
@@ -147,10 +196,11 @@ do n_step = 1,n_times
         end do
     end do
 
-    time = n_step*DELTA_T
+    T(:,:,:) = T_new(:,:,:)
+    deallocate(T_new)
+
     if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
         days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
-        !print*, "Days passed =", days,'Avg Surf Temp = ', sum(T(1,:,:))/(144*90)
         print*, 'Days passed = ', days
     end if
 
@@ -161,9 +211,12 @@ do n_step = 1,n_times
 
 end do
 
+!call cpu_time(finish)
+!print*,"CPU time taken for",n_times*DELTA_T/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE),"days=",finish-start," seconds."
 
 
-deallocate(land_mask)
+
+deallocate(land_mask,lats)
 deallocate(upward_Q_flux,F_a,F_c)
 deallocate(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
 deallocate(T,M)
