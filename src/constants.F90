@@ -17,7 +17,7 @@ private
   real(real64), parameter,public  :: RHO_AIR =  1.22 ! air density kg/m3
   real(real64), parameter,public  :: RHO_WATER =  1027 ! km/m3
   real(real64), parameter,public  :: R_PLANET = 1.12384*6.371e6 ! radius of planet in m (as fraction of Earth radius)
-  real(real64), parameter,public  :: EPSILON = 0.00001 ! pretty good need to find appropriate value
+  real(real64), parameter,public  :: EPSI = 0.00001 ! pretty good need to find appropriate value
   real(real64), parameter,public  :: OMEGA = 6.501e-6 ! angular frequency planet, about its central axis
 !  real(real64), parameter,public  :: OMEGA = 7.272e-5 ! Earth value for omega
   real(real64), parameter,public  :: SIGMA = 5.67e-8 ! stefan boltzman constant
@@ -35,20 +35,21 @@ private
   real(real64), parameter,public  :: SECONDS_PER_MINUTE = 60.
   real(real64), parameter,public  :: DELTA_T = 12.0*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! time step of 1 hours
   !integer, parameter,public  :: TIME_STEPS = 20000*2 ! for time step of 12 hours, 20,000 time steps needed for 10,000 day run
-  integer(int64), parameter,public  :: TIME_STEPS = 10*2
+  integer(int64), parameter,public  :: TIME_STEPS = 20000*2
+  !integer(int64), parameter,public  :: TIME_STEPS = 50
   real(real64), parameter,public  :: TIME_OUTPUT_FREQ = 25.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! print update frequency in seconds, but first term is number of days
   real(real64), parameter,public  :: DATA_OUTPUT_FREQ = 100.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! output frequency in seconds, but first term is number of days
   real(real64), parameter,public  :: TIME_OUTPUT_TOL = 1e-6 ! days
   real(real64), parameter,public  :: T_OFFSET = 0.0 ! IF you want to restart run, specify start time here, so it doesn't save over stuff, and change input temp files to output ones
-  real(fgsl_double), parameter,public  :: TOL = 1e-6
+  !real(fgsl_double), parameter,public  :: TOL = 1e-6
   integer(fgsl_size_t), parameter,public  :: MAX_ITER = 100
   real(real64), parameter,public  :: pi = 4*atan(1.)
   integer(int64),parameter,public :: N_DEPTHS = 2 ! 1 deep and 1 surface layer
 !***********************
 ! input data file names
 !***********************
-  !character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_no_land.dat"
-  character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_day_cont_100_180.dat"
+  character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_no_land.dat"
+  !character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_day_cont_100_180.dat"
   real(real64)            ,parameter,public  :: MAX_FILE_LINE_SIZE = 4000
   character(len=*),parameter,public  :: SW_FLUX_NET_DOWN_DATA = "input_data/ProCb/surface_net_downward_shortwave_flux.dat"
   character(len=*),parameter,public  :: LW_FLUX_DOWN_DATA = "input_data/ProCb/surface_downwelling_longwave_flux_in_air.dat"

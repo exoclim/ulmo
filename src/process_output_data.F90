@@ -5,8 +5,6 @@ module process_output_data
  use Constants
  use READ_DATA
  use heat_fluxes
- use MASS_FLUX
- use DIV_M
  use, intrinsic :: iso_fortran_env
  implicit none
  public :: process_output
@@ -79,7 +77,7 @@ end function
 !    print*, 'time_str=',time_str
     days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
     days = nint(days)
-    print*, 'data outputted at = ', days
+    print*, 'Data outputted at = ', days
     days_int = int(days)
     time_str = int_to_str(days_int)
 

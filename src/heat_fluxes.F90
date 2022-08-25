@@ -11,7 +11,6 @@ private
 contains
 
 
-
 subroutine calc_Q_flux(T,upward_Q_flux,F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up)
     real(real64), dimension(:,:), intent(in) :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up
     integer(int64) :: i,j

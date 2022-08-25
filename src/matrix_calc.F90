@@ -85,40 +85,18 @@ end subroutine calculate_matrix
 ! to ensure an energy exchange between the layers. 1.0/(RHO_WATER*C_V*H_S) prefactor converts a flux in W/m2 to K/s
 !**********************************************************************************************************************
 subroutine calculate_vector_f_values(land_mask,T,f_f,F_a,F_c)!,B)
-    real(real64),dimension(:,:,:),intent(in) :: T
+    real(fgsl_double),dimension(:,:,:),intent(in) :: T
     integer(int64), dimension(:,:), intent(in) :: land_mask
     real(real64), dimension(:,:),intent(in) :: F_a,F_c
     !real(real64), dimension(:),allocatable :: vec_data
     real(real64) :: depth,b_hij
-    integer(int64) :: h,i ,j,SURFACE,DEEP
+    integer(int64) :: h,i ,j
     ! fgsl !
     !integer(fgsl_size_t), parameter :: n = 25920
     real(fgsl_double),dimension(:),intent(out) :: f_f
     integer(fgsl_size_t) :: vec_index !,size_vec
     real(fgsl_double) :: vec_val
-    !type(fgsl_vector),intent(out) :: f
 
-    !allocate(F_c(N_LATS,N_LONS),F_a(N_LATS,N_LONS),vec_data(n))
-
-    SURFACE = 1 ! position in 3D temperatures array (1,:,:)
-    DEEP = 2    ! position in 3D temperatures array (2,:,:)
-
-    !b_hij = 0.0
-
-    !call calculate_F_a()
-    !call calculate_F_c(T,F_c)
-
-    !testing (works)!
-!    h = 2
-!    depth=h_slab(h)
-!    print*,'depth deep',depth
-!    b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(-F_c(1,1)+T(2,1,1))
-!    print*,'deep = ',b_hij
-!    h=1
-!    depth= h_slab(h)
-!    print*,'depth deep',depth
-!    b_hij = (DELTA_T/(RHO_WATER*C_V*depth))*(F_c(1,1)+F_a(1,1)-EMISSIVITY*SIGMA*(T(SURFACE,1,1))**4)*T(SURFACE,1,1)
-!    print*,'surf=',b_hij
     do h = 1,N_DEPTHS
         do i = 1, N_LATS
             do j= 1,N_LONS
@@ -132,26 +110,16 @@ subroutine calculate_vector_f_values(land_mask,T,f_f,F_a,F_c)!,B)
                     else
                         b_hij = DELTA_T/(RHO_WATER*C_V*depth)*(-F_c(i,j))+T(h,i,j) !! double check this with Jake !!
                     end if
-                    !print*,b_hij
-                end if
 
+                end if
                 vec_index = (h-1)*N_LATS*N_LONS+(i-1)*N_LONS+(j-1) ! fgsl index
-                !vec_data(vec_index+1) = b_hij ! needs fortran index
-                !print*, vec_index
                 vec_val = b_hij ! making sure the type is fgsl_size_t
-                !print*, vec_val
                 f_f(vec_index+1) = vec_val
 
             end do
         end do
     end do
 
-
-!print*, 'vec = ',v
-!f = fgsl_vector_init(f_f)
- !   deallocate(F_a,F_c,vec_data)
-!size_vec =  fgsl_vector_get_size(B)
-!print*, 'size=', size_vec
 
 
 end subroutine calculate_vector_f_values
