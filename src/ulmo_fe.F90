@@ -9,7 +9,9 @@ program ULMO
     use heat_fluxes, only: calc_Q_flux,calculate_F_a,calculate_F_c
     use HEIGHT_OF_SLAB
     use DEGREE_TO_RADIAN
-    use calc_new_T_fe
+    use dA_da,only: calculate_dA_d_theta, calculate_dA_d_phi
+    use calc_new_T_fe,only: calc_new_T_surf_diff, calc_new_T_deep_diff,calc_new_T_surf_notrns, &
+                            calc_new_T_deep_notrns,calc_new_T_surf_ekman,calc_new_T_deep_ekman
     use, intrinsic :: iso_fortran_env
     !**TESTING**!
     use process_output_data
@@ -25,6 +27,7 @@ real(real64), dimension(:,:),allocatable :: u_wind,v_wind,tau_PHI,tau_THETA,mass
                                             ,mass_flux_PHI,sv_flow_PHI,sv_flow_THETA
 real(real64), dimension(:,:,:), allocatable :: M
 
+
 !**Land mask and coordinate variables**!
 integer(int64), dimension(:,:), allocatable :: land_mask
 real(real64), dimension(:,:),allocatable :: lats,lats_data
@@ -36,15 +39,12 @@ real(real64), dimension(:,:,:), allocatable :: T,T_new
 real(real64), dimension(:,:), allocatable :: upward_Q_flux, F_a, F_c
 real(real64), dimension(:,:), allocatable :: T_surf_init,T_deep_init
 
+
 !**Forward Euler/time stepping variables**!
-integer(int64) :: n_times,n_step,h,i,j,version
-real(real64) :: days,time,s_dfsn,s_ekman,s_notrns
+integer(int64) :: n_times,n_step,h,i,j,version,diff_coef
+real(real64) :: days,time,s_dfsn,s_ekmn,s_notrns
 
-!**CPU Time varaiables**!
-!real(real64) :: start, finish
-!real(real64),dimension(:,:),allocatable:: cpu_data
 
-!call cpu_time(start)
 
 !**Land Mask allocation and load and coords**!
 allocate(land_mask(N_LATS,N_LONS))
@@ -85,8 +85,8 @@ call calculate_flow_sv_THETA(lats,mass_flux_THETA,sv_flow_THETA)
 
 allocate(M(2,N_LATS,N_LONS))
 
-M(1,:,:) = mass_flux_PHI(:,:) !PHI = 1
-M(2,:,:) = mass_flux_THETA(:,:) !THETA = 2
+M(1,:,:) = mass_flux_THETA(:,:) !THETA = 1
+M(2,:,:) = mass_flux_PHI(:,:) !PHI = 2
 
 deallocate(mass_flux_PHI,mass_flux_THETA,sv_flow_PHI,sv_flow_THETA)
 
@@ -116,15 +116,22 @@ n_times = TIME_STEPS  !Number of time steps, 20 steps = 10 days.
 call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a)
 d_theta = deg_to_rad(DELTA_LAT)
 d_phi = deg_to_rad(DELTA_LON)
-s_dfsn = DELTA_T*D/(R_PLANET)**2
+!diff_coef = D
+!diff_coef = 1 ! works
+diff_coef = 250
 
-!call cpu_time(finish)
-!print '("CPU time before time stepping = ",f6.3," seconds.")',finish-start
+s_dfsn = DELTA_T*diff_coef/(R_PLANET)**2
 
-!call cpu_time(start)
 
-print*,'Enter version of ulmo (0,1 or 2):'
-read *,version
+!!****By this point the only arrays are: T, M, F_a, F_c ,F_net_sw_down,F_lw_down,F_latent_up and F_sensible_up****!!
+
+!print*,'Enter version of ulmo (0,1 or 2):'
+!read *,version
+version = 1
+
+
+
+allocate(T_new(2,N_LATS,N_LONS))
 
 do n_step = 1,n_times
 
@@ -133,17 +140,20 @@ do n_step = 1,n_times
         print*,'Starting time stepping. This will take a while!'
     endif
 
-     time = n_step*DELTA_T
+    time = n_step*DELTA_T
+    !print*,n_step
 
-    allocate(T_new(2,N_LATS,N_LONS))
 
     do h = 1,N_DEPTHS
         do i = 1, N_LATS
             do j = 1,N_LONS
 
-                theta = deg_to_rad(lats(i,1))
+
+
                 thickness = h_slab(h)
                 s_notrns = DELTA_T/(RHO_WATER*C_V*thickness)
+                s_ekmn = DELTA_T/(R_PLANET*RHO_WATER*thickness)
+                theta = deg_to_rad(lats(i,1))
 
                 call calculate_F_c(T,F_c)
                 call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
@@ -179,14 +189,28 @@ do n_step = 1,n_times
                         elseif(h==2) then
 
                             call calc_new_T_deep_diff(T,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,F_c,theta,T_new)
-
+                            !call calc_new_T_deep_notrns(T,i,j,h,s_notrns,F_c,T_new) ! setting deep to no diffusion
                         else
 
                             print*, 'Index h is out of range'
 
                         end if
 
-                    !**Diffusion and Ekman trasnport**!
+                    !**Diffusion and Ekman transport**!
+                    elseif(version==2) then
+
+                        if(h==1) then
+                            call calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,F_c,F_a,&
+                                                        theta,T_new)
+
+                        elseif(h==2) then
+                            call calc_new_T_deep_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,F_c,&
+                                                        theta,T_new)
+
+                        else
+                            print*, 'Index h is out of range'
+
+                        end if
 
                     end if
 
@@ -197,25 +221,23 @@ do n_step = 1,n_times
     end do
 
     T(:,:,:) = T_new(:,:,:)
-    deallocate(T_new)
+
 
     if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
         days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
         print*, 'Days passed = ', days
+        call process_output(T,upward_Q_flux,time)
     end if
 
     if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
         call process_output(T,upward_Q_flux,time)
     end if
 
-
+!    call process_output(T,upward_Q_flux,time)
 end do
 
-!call cpu_time(finish)
-!print*,"CPU time taken for",n_times*DELTA_T/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE),"days=",finish-start," seconds."
 
-
-
+deallocate(T_new)
 deallocate(land_mask,lats)
 deallocate(upward_Q_flux,F_a,F_c)
 deallocate(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
