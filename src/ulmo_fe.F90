@@ -125,9 +125,9 @@ s_dfsn = DELTA_T*diff_coef/(R_PLANET)**2
 
 !!****By this point the only arrays are: T, M, F_a, F_c ,F_net_sw_down,F_lw_down,F_latent_up and F_sensible_up****!!
 
-!print*,'Enter version of ulmo (0,1 or 2):'
-!read *,version
-version = 2
+print*,'Enter version of ulmo (0,1 or 2):'
+read *,version
+!version = 2
 
 
 
