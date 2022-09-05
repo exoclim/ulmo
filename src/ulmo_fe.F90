@@ -116,9 +116,9 @@ n_times = TIME_STEPS  !Number of time steps, 20 steps = 10 days.
 call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a)
 d_theta = deg_to_rad(DELTA_LAT)
 d_phi = deg_to_rad(DELTA_LON)
-!diff_coef = D
+diff_coef = D
 !diff_coef = 1 ! works
-diff_coef = 250
+!diff_coef = 250
 
 s_dfsn = DELTA_T*diff_coef/(R_PLANET)**2
 
@@ -127,7 +127,7 @@ s_dfsn = DELTA_T*diff_coef/(R_PLANET)**2
 
 !print*,'Enter version of ulmo (0,1 or 2):'
 !read *,version
-version = 1
+version = 2
 
 
 

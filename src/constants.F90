@@ -23,7 +23,8 @@ private
   real(real64), parameter,public  :: SIGMA = 5.67e-8 ! stefan boltzman constant
   real(real64), parameter,public  :: H_S = 50.0 ! thickness of surface layer in m
   real(real64), parameter,public  :: H_D = 150.0 ! thickness of deep layer below
-  real(real64), parameter,public  :: D = 25000.0 ! horizontal diffusion coefficient m2/s
+  !real(real64), parameter,public  :: D = 25000.0 ! horizontal diffusion coefficient m2/s
+  real(real64),parameter,public   :: D = 250 !needs to be this for Diffusion or Ekmn (stability)
   integer(int64), parameter,public  :: N_LATS = 90 ! number of latitude points
   integer(int64), parameter,public  :: N_LONS = 144 ! number of longitude points
   real(real64), parameter,public  :: LAT_MIN = -89.0
