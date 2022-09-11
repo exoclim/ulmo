@@ -16,7 +16,7 @@ Instructions <br />
 -> 2 = Diffusion  <br />
 -> 3 = Diffusion and Ekman transport<br />  
 -> Constants such as the Diffusion constant can be changed in the constants.F90 file<br />  
--> Examples can befound and run from the examples folder, (these have pre determined versions and are named accordingly) <br />  
+-> Examples can be found and run from the examples folder, (these have pre determined versions and are named accordingly) <br />  
 IF USING THE FGSL VERSION ONLY:  <br />
 ->Make a new python environment  <br />
 ->Conda install fgsl  <br />
