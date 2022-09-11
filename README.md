@@ -17,9 +17,9 @@ Instructions <br />
 -> 3 = Diffusion and Ekman transport<br />  
 -> Constants such as the Diffusion constant can be changed in the constants.F90 file<br />  
 -> Examples can be found and run from the examples folder, (these have pre determined versions and are named accordingly) <br />  
-IF USING THE FGSL VERSION ONLY:  <br />
+IF USING THE FGSL VERSION:  <br />
 ->Make a new python environment  <br />
-->Conda install fgsl  <br />
+->Conda install fgsl and gfortran <br />
 ->Edit make file to compile the correct files e.g ulmo_fgsl.F90 and change the compiler flags <br />
 
 
