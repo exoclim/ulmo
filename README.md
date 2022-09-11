@@ -3,7 +3,7 @@ ulmo
 </h1>
 <h4 align="center">
 Model of Ekman heat transport for slab oceans, now in modern Fortran!
-
+</h4>
 Instructions  
 ->Pull the repository  
 ->Make a new python environment (maybe call it ULMO)  
@@ -24,7 +24,6 @@ IF USING THE FGSL VERSION ONLY:
 
 
 
-</h4>
 
 <p align="center">
   <img src="https://img.shields.io/badge/wip-%20%F0%9F%9A%A7%20under%20construction%20%F0%9F%9A%A7-yellow"
