@@ -4,9 +4,9 @@ ulmo
 <h4 align="center">
 Model of Ekman heat transport for slab oceans, now in modern Fortran!
 </h4>
-Instructions  
-->Pull the repository  
-->Make a new python environment (maybe call it ULMO)  
+Instructions <br />  
+->Pull the repository <br />
+->Make a new python environment (maybe call it ULMO)    
 ->Conda install gfortran  
 ->To run the code use "Make run"  
 ->"Make clean" removes complied files  
