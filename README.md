@@ -6,7 +6,7 @@ Model of Ekman heat transport for slab oceans, now in modern Fortran!
 </h4>
 Instructions <br />  
 ->Pull the repository <br />
-->Make a new python environment (maybe call it ULMO) <br />   
+->Make a new python environment (call it "ulmo") <br />   
 ->Conda install gfortran  <br />
 ->To run the code use "Make run" <br />  
 ->"Make clean" removes complied files  <br />
