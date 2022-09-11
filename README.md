@@ -11,7 +11,7 @@ Instructions <br />
 ->To run the code use "Make run" <br />  
 ->"Make clean" removes complied files  <br />
 ->"Make all" compiles files only  <br />
-->Version propmt after running refers to the heat transport mechanisms enabled <br />  
+->Version prompt after running refers to the heat transport mechanisms enabled <br />  
 -> 1 = no transport  <br />
 -> 2 = Diffusion  <br />
 -> 3 = Diffusion and Ekman transport<br />  
