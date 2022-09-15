@@ -140,19 +140,13 @@ deallocate(T_surf_init,T_deep_init)
 !**Calculating F_a**!
 call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a) ! Only depends on um inputs
 
-!**Initialsing vector f**!
-f = fgsl_vector_init(f_f)
-
-
-!**Initialising vector u**!
-u = fgsl_vector_init(u_f)
 u_f = 0. !initial guess x = 0
 
-!**Calculating Matrix**!
+!Building Sparse matrix
 call calculate_matrix(land_mask,A) ! allocated using subroutine
+
 C = fgsl_spmatrix_compcol(A) ! compressed column format
-
-
+call fgsl_spmatrix_free(A) ! deallocated matrix
 !**SYSTEM ANALYSIS**!
 !call system_mem_usage(valueRSS)
 !write (*,"(a49,i5)") 'valueRSS before time stepping =',valueRSS
@@ -161,7 +155,7 @@ C = fgsl_spmatrix_compcol(A) ! compressed column format
 !print '("CPU time before time stepping = ",f6.3," seconds.")',finish-start
 !allocate(cpu_data(n_times,1_int64))
 
-work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
+
 !**CALCULATING NEW TEMP**!
 n_times = 2000 !number of time steps 20 steps = 10 days
 do n_step = 1,n_times
@@ -171,11 +165,20 @@ do n_step = 1,n_times
 !    call system_mem_usage(valueRSS)
 !    write(*,"(a40,i5,a1,i6)") 'valueRSS before solving F_c etc',n_step,'=',valueRSS
 !    Rss_data(n_step+2) = valueRSS
+    !**Calculating Matrix**!
 
+
+    work =  fgsl_splinalg_itersolve_alloc(S,n,0_fgsl_size_t)
+
+    !**Initialsing vector f**!
+    f = fgsl_vector_init(f_f)
+    !**Initialising vector u**!
+    u = fgsl_vector_init(u_f)
 
     call calculate_F_c(T,F_c)
     !call calc_Q_flux(T,upward_Q_flux,F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
     call calculate_vector_f_values(land_mask,T,f_f,F_a,F_c)
+
 
 !    !**SYSTEM ANALYSIS**!
 !    call system_mem_usage(valueRSS)
@@ -230,6 +233,9 @@ do n_step = 1,n_times
         call process_output(T,upward_Q_flux,time)
     end if
 
+    call fgsl_vector_free(f) ! deallocate vector
+    call fgsl_vector_free(u)
+    call fgsl_splinalg_itersolve_free(work)
 
 end do
 
@@ -239,14 +245,14 @@ end do
 !Rss_data(n_times+4) = valueRSS
 
 !**Deallocation of Matrices and vectors**!
-call fgsl_vector_free(f) ! deallocate vector
-call fgsl_spmatrix_free(A) ! deallocated matrix
+
+
 call fgsl_spmatrix_free(C)
 deallocate(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up)
 deallocate(T,M)
 deallocate(land_mask)
 deallocate(upward_Q_flux,F_a,F_c)
-call fgsl_splinalg_itersolve_free(work) !**CRUCIAL THAT THIS STATEMENT IS INSIDE THE LOOP**!
+
 
 !!**SYSTEM ANALYSIS**!
 !call system_mem_usage(valueRSS)

@@ -12,7 +12,7 @@ private
 
 contains
 !**********************************************************
-! Function to calculate the surface stress in PHI direction
+! Subroutine to calculate the surface stress in PHI direction
 !**********************************************************
 subroutine calculate_surface_stress_PHI(u_wind,tau_PHI)
     real(real64), dimension(:,:),intent(in) :: u_wind
@@ -28,7 +28,7 @@ subroutine calculate_surface_stress_PHI(u_wind,tau_PHI)
 
 end subroutine calculate_surface_stress_PHI
 !************************************************************
-! Function to calculate the surface stress in THETA direction
+! Subroutine  to calculate the surface stress in THETA direction
 !************************************************************
 subroutine calculate_surface_stress_THETA(v_wind,tau_THETA)
     real(real64), dimension(:,:),intent(in):: v_wind(:,:)
@@ -42,7 +42,7 @@ subroutine calculate_surface_stress_THETA(v_wind,tau_THETA)
 
 end subroutine calculate_surface_stress_THETA
 !*********************************************
-! Function to calculate the Coriolis parameter
+! Subroutine  to calculate the Coriolis parameter
 !*********************************************
 function calculate_coriolis_parameter(theta_deg) result(ans)
     real(real64) :: ans
@@ -51,7 +51,7 @@ function calculate_coriolis_parameter(theta_deg) result(ans)
 
 end function calculate_coriolis_parameter
 !*************************************************************************************
-! Functions to calculate the mass flux in THETA and PHI directions from surface stress
+! Subroutines to calculate the mass flux in THETA and PHI directions from surface stress
 !*************************************************************************************
 subroutine calculate_mass_flux_THETA(lats,tau_PHI,tau_THETA,land_mask,mass_flux_THETA)
     integer(int64) :: i,j
@@ -63,7 +63,6 @@ subroutine calculate_mass_flux_THETA(lats,tau_PHI,tau_THETA,land_mask,mass_flux_
     do i = 1,N_LATS
         f = calculate_coriolis_parameter(lats(i,1))
         do j = 1,N_LONS
-            !! land mask if statement !!
             if (land_mask(i,j) == 1) then
                 mass_flux_THETA(i,j) = 0
             else
@@ -95,7 +94,7 @@ subroutine calculate_mass_flux_PHI(lats,tau_PHI,tau_THETA,land_mask,mass_flux_PH
 
 end subroutine calculate_mass_flux_PHI
 !****************************************************************************
-! Functions to convert mass flux into the unit of Sverdrups for Theta and Phi
+! Subroutines to convert mass flux into the unit of Sverdrups for Theta and Phi
 !****************************************************************************
 subroutine calculate_flow_sv_PHI(mass_flux_PHI,sv_flow_PHI)
     integer(int64) :: i,j
@@ -105,7 +104,6 @@ subroutine calculate_flow_sv_PHI(mass_flux_PHI,sv_flow_PHI)
     do i = 1,N_LATS
         do j= 1,N_LONS
             sv_flow_PHI = mass_flux_PHI * R_PLANET * deg_to_rad(DELTA_LAT)  / RHO_WATER /1.0e6
-
         end do
     end do
 
@@ -121,7 +119,6 @@ subroutine calculate_flow_sv_THETA(lats,mass_flux_THETA,sv_flow_THETA)
         theta = deg_to_rad(lats(i,1))
         do j= 1,N_LONS
             sv_flow_THETA(i,j) = mass_flux_THETA(i,j) * R_PLANET * cos(theta) * deg_to_rad(DELTA_LON) / RHO_WATER /1.0e6
-
         end do
     end do
 

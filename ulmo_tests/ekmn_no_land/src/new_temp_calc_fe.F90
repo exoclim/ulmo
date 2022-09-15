@@ -1,6 +1,6 @@
-!**********************************************************************************
-! Module calculates the new temperature at new time step using Forward Euler method
-!**********************************************************************************
+!********************************************************************************************************
+! Module contains subroutines to calculate the new temperature at new time step using Forward Euler method
+!********************************************************************************************************
 module calc_new_T_fe
 use Constants
 use DEGREE_TO_RADIAN
@@ -38,14 +38,14 @@ subroutine calc_new_T_deep_notrns(T,i,j,h,s_notrns,F_c,T_new)
 
 end subroutine calc_new_T_deep_notrns
 
-!*****************************************************************************************************************************
+!***************************************************
+!Function to calculate new coordinates at boundaries
+!***************************************************
+function calculate_new_lon(lon) result(new_lon)
 ! At maximum or minimum latitude, the adjacent latitude point above or bellow, respectively, is located at the same latitude,
 ! but at the new longitudinal point (from lon to new_lon)
-!******************************************************************************************************************************
-function calculate_new_lon(lon) result(new_lon)
     integer(int64), intent(in) :: lon
     integer(int64) :: new_lon
-
     new_lon = lon+N_LONS/2
     if (new_lon > N_LONS) then
         new_lon = new_lon - N_LONS
@@ -247,9 +247,9 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
     real(real64) :: div_m,dM_theta_dtheta,dT_surf_dtheta,dT_surf_dphi,dM_phi_dphi
     real(real64),dimension(:,:,:), intent(out) :: T_new
 
-    !Theta = 1 PHI =2
+    !Indexes for Theta and PHI: Theta = 1 , PHI =2 .
 
-    call calculate_div_M(i,j,theta,M(2,:,:),M(1,:,:),div_m) ! remember div_m is multiplied by 1/R_planet here
+    call calculate_div_M(i,j,theta,M(2,:,:),M(1,:,:),div_m)
     call calculate_dA_d_phi(T(1,:,:),i,j,dT_surf_dphi)
     call calculate_dA_d_phi(M(2,:,:),i,j,dM_phi_dphi)
     call calculate_dA_d_theta(T(1,:,:),i,j,dT_surf_dtheta)
@@ -258,10 +258,9 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
     if(div_m < 0) then
 
         if(i==1) then
-
+            ! T(h,i-1,j) = T(h,i,calculate_new_lon(j))
             if(j==1) then
                  ! j-1 = N_LONS
-
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
                 s_dfsn*( (T(h,i+1,j)-2*T(h,i,j)+T(h,i,calculate_new_lon(j)))/(d_theta)**2  - &
                 tan(theta)*(T(h,i+1,j)-T(h,i,calculate_new_lon(j)))/(2*d_theta)  + &
@@ -281,7 +280,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 (1/cos(theta))*(M(2,i,j)*dT_surf_dphi+T(h,i,j)*dM_phi_dphi) - &
                 T(1,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
-
 
             else
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
@@ -299,7 +297,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
 
         elseif(i==N_LATS) then
             !T(h,i+1,j) = T(h,i,calculate_new_lon(j))
-
             if(j==1) then
                 ! j-1 = N_LONS
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
@@ -310,7 +307,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 (1/cos(theta))*(M(2,i,j)*dT_surf_dphi+T(h,i,j)*dM_phi_dphi) - &
                 T(1,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
-
 
             elseif(j==N_LONS) then
                 ! j+1 = 1
@@ -323,9 +319,7 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 T(1,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
 
-
             else
-
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
                 s_dfsn*( (T(h,i,calculate_new_lon(j))-2*T(h,i,j)+T(h,i-1,j))/(d_theta)**2  - &
                 tan(theta)*(T(h,i,calculate_new_lon(j))-T(h,i-1,j))/(2*d_theta)  + &
@@ -365,7 +359,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
 
 
             else
-
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
                 s_dfsn*( (T(h,i+1,j)-2*T(h,i,j)+T(h,i-1,j))/(d_theta)**2  - &
                 tan(theta)*(T(h,i+1,j)-T(h,i-1,j))/(2*d_theta)  + &
@@ -375,16 +368,13 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 T(1,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
 
-
             end if
 
-        endif
+        end if
 
     elseif(div_m > 0) then
 
         if(i==1) then
-
-            !print*, 'theta=',theta
             ! T(h,i-1,j) = T(h,i,calculate_new_lon(j))
             if(j==1) then
                  ! j-1 = N_LONS
@@ -397,7 +387,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 T(2,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
 
-
             elseif(j==N_LONS) then
                 ! j+1 = 1
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
@@ -409,7 +398,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 T(2,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
 
-
             else
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
                 s_dfsn*( (T(h,i+1,j)-2*T(h,i,j)+T(h,i,calculate_new_lon(j)))/(d_theta)**2 - &
@@ -420,13 +408,10 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 T(2,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
 
-
-
             end if
 
         elseif(i==N_LATS) then
             !T(h,i+1,j) = T(h,i,calculate_new_lon(j))
-
             if(j==1) then
                 ! j-1 = N_LONS
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
@@ -437,7 +422,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 (1/cos(theta))*(M(2,i,j)*dT_surf_dphi+T(h,i,j)*dM_phi_dphi) - &
                 T(2,i,j)*(dM_theta_dtheta-M(1,i,j)*tan(theta)+1/cos(theta)*dM_phi_dphi) ) + &
                 T(h,i,j)
-
 
             elseif(j==N_LONS) then
                 ! j+1 = 1
@@ -451,7 +435,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 T(h,i,j)
 
             else
-
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
                 s_dfsn*( (T(h,i,calculate_new_lon(j))-2*T(h,i,j)+T(h,i-1,j))/(d_theta)**2  - &
                 tan(theta)*(T(h,i,calculate_new_lon(j))-T(h,i-1,j))/(2*d_theta)  + &
@@ -488,7 +471,6 @@ subroutine calc_new_T_surf_ekman(T,M,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,s_ekmn,
                 T(h,i,j)
 
             else
-
                 T_new(h,i,j) = s_notrns*(F_a(i,j)+F_c(i,j)-SIGMA*EMISSIVITY*(T(h,i,j))**4)+ &
                 s_dfsn*( (T(h,i+1,j)-2*T(h,i,j)+T(h,i-1,j))/(d_theta)**2  - &
                 tan(theta)*(T(h,i+1,j)-T(h,i-1,j))/(2*d_theta)  + &

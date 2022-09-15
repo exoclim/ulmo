@@ -1,6 +1,5 @@
-!! This module has not been tested yet !!
 !***************************************************************
-! This module contains all the radiation flux functions for ULMO
+! This module contains all the radiation flux subroutines for ULMO
 !***************************************************************
 module heat_fluxes
 use Constants
@@ -9,8 +8,9 @@ implicit none
 public :: calc_Q_flux, calculate_F_c, calculate_F_a
 private
 contains
-
-
+!*************************************************************
+! Subroutine to calculate the net heat flux from ocean surface
+!*************************************************************
 subroutine calc_Q_flux(T,upward_Q_flux,F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up)
     real(real64), dimension(:,:), intent(in) :: F_net_sw_down, F_lw_down,F_latent_up,F_sensible_up
     integer(int64) :: i,j
@@ -27,7 +27,7 @@ subroutine calc_Q_flux(T,upward_Q_flux,F_net_sw_down, F_lw_down,F_latent_up,F_se
 
 end subroutine calc_Q_flux
 !************************************************************************************************
-! Function to read in atmospheric fluxes, net stellar sw flux (subrtracts reflected sw radiation
+! Subroutine to read in atmospheric fluxes, net stellar sw flux (subtracts reflected sw radiation
 ! from the incident)and incoming lw flux from atmospheric emission
 !************************************************************************************************
 subroutine calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a)
@@ -41,12 +41,10 @@ subroutine calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a)
         end do
     end do
 
-
-
 end subroutine calculate_F_a
-!**************************************************************************
-! Checks if convection condition is met, then calculates the associated flux
-!***************************************************************************
+!*******************************************************************************************
+! Subroutine that checks if convection condition is met, then calculates the associated flux
+!*******************************************************************************************
 subroutine calculate_F_c(T,F_c)
     integer(int64) :: i,j
     real(real64), dimension(:,:),intent(out):: F_c

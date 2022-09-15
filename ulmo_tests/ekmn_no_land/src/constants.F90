@@ -3,7 +3,6 @@
 !*********************************************************************************
 module Constants
 use, intrinsic :: iso_fortran_env
-use fgsl
 implicit none
 private
 
@@ -23,7 +22,8 @@ private
   real(real64), parameter,public  :: SIGMA = 5.67e-8 ! stefan boltzman constant
   real(real64), parameter,public  :: H_S = 50.0 ! thickness of surface layer in m
   real(real64), parameter,public  :: H_D = 150.0 ! thickness of deep layer below
-  real(real64), parameter,public  :: D = 25000.0 ! horizontal diffusion coefficient m2/s
+  !real(real64), parameter,public  :: D = 25000.0 ! horizontal diffusion coefficient m2/s
+  real(real64),parameter,public   :: D = 250.0 !needs to be this for Diffusion or Ekmn (stability)
   integer(int64), parameter,public  :: N_LATS = 90 ! number of latitude points
   integer(int64), parameter,public  :: N_LONS = 144 ! number of longitude points
   real(real64), parameter,public  :: LAT_MIN = -89.0
@@ -34,17 +34,15 @@ private
   real(real64), parameter,public  :: MINUTES_PER_HOUR = 60.
   real(real64), parameter,public  :: SECONDS_PER_MINUTE = 60.
   real(real64), parameter,public  :: DELTA_T = 12.0*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! time step of 1 hours
-  !real(real64), parameter,public  :: DELTA_T = 6.0*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! time step of 0.5 hours
-  !real(real64), parameter,public  :: DELTA_T = 3.0*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! time step of 0.25 hours (works for diffusion)
-  !integer, parameter,public  :: TIME_STEPS = 20000*2 ! for time step of 12 hours, 20,000 time steps needed for 10,000 day run
-  integer(int64), parameter,public  :: TIME_STEPS = 20000*2
+  integer(int64), parameter,public  :: TIME_STEPS = 20000*2 ! for time step of 12 hours, 20,000 time steps needed for 10,000 day run
+
   !integer(int64), parameter,public  :: TIME_STEPS = 50
   real(real64), parameter,public  :: TIME_OUTPUT_FREQ = 25.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! print update frequency in seconds, but first term is number of days
   real(real64), parameter,public  :: DATA_OUTPUT_FREQ = 100.0*HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE ! output frequency in seconds, but first term is number of days
   real(real64), parameter,public  :: TIME_OUTPUT_TOL = 1e-6 ! days
   real(real64), parameter,public  :: T_OFFSET = 0.0 ! IF you want to restart run, specify start time here, so it doesn't save over stuff, and change input temp files to output ones
-  !real(fgsl_double), parameter,public  :: TOL = 1e-6
-  integer(fgsl_size_t), parameter,public  :: MAX_ITER = 100
+  real(real64), parameter,public  :: TOL = 1e-6
+  integer(int64), parameter,public  :: MAX_ITER = 100
   real(real64), parameter,public  :: pi = 4*atan(1.)
   integer(int64),parameter,public :: N_DEPTHS = 2 ! 1 deep and 1 surface layer
 !***********************

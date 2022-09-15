@@ -3,7 +3,7 @@
 PREFIX=${CONDA_PREFIX}
 FC=gfortran #fortran compiler
 FFLAGS=-O3 -Wall -Wextra -std=f2008 -fcheck=all -g -fall-intrinsics
-#FFLAGS=-C -P -traditional -E -C -g -O3 -std=gnu99 -Wall -Wextra -Werror -Wformat=2 -Winit-self  -Wfloat-equal -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align  -Wconversion -Wlogical-op -Wstrict-prototypes -Wmissing-declarations  -Wredundant-decls -Wnested-externs -Woverlength-strings   -fdiagnostics-show-option -fdefault-integer-8 -fdefault-real-8 -fdefault-double-8                         -std=gnu                              -Wtabs                                -I/home/um/cylc-run/GCOM7.3/share/uoe_x86_gfortran_mpp/build/include -O2 –Werror -L/home/um/cylc-run/GCOM7.3/share/uoe_x86_gfortran_mpp/build/lib -lgcom -fopenmp 
+#FFLAGS=-P -traditional  -g -O3 -Wall -Wextra -Werror -Wcast-align -Wconversion -fdiagnostics-show-option -std=gnu -Wtabs -I/home/um/cylc-run/GCOM7.3/share/uoe_x86_gfortran_mpp/build/include -L/home/um/cylc-run/GCOM7.3/share/uoe_x86_gfortran_mpp/build/lib -lgcom -fopenmp  
 #FFLAGS=-O2 -Wall -Wextra -std=gnu  
 INCLUDE=-I${PREFIX}/include/fgsl -I${PREFIX}/include
 LIBS=-L${PREFIX}/lib -lfgsl -lgsl -lgslcblas -lm -lcblas -lm

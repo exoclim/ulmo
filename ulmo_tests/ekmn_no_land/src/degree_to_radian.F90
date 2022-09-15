@@ -1,5 +1,5 @@
 !*************************************************************
-! This module takes a angle in degrees and converts to radians
+! This module contains function converting degrees to radians
 !*************************************************************
 module DEGREE_TO_RADIAN
 use Constants

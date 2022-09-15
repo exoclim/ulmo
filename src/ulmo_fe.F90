@@ -1,6 +1,8 @@
 program ULMO
 
+    !****************************************************************************************!
     !**This version of Ulmo uses the Forward Euler method to solving differential equations**!
+    !****************************************************************************************!
 
     use MASS_FLUX, only: calculate_surface_stress_PHI,calculate_surface_stress_THETA,calculate_flow_sv_THETA &
     ,calculate_mass_flux_THETA,calculate_mass_flux_PHI,calculate_flow_sv_PHI
@@ -10,10 +12,10 @@ program ULMO
     use HEIGHT_OF_SLAB
     use DEGREE_TO_RADIAN
     use dA_da,only: calculate_dA_d_theta, calculate_dA_d_phi
+    use div_m,only: calculate_div_M
     use calc_new_T_fe,only: calc_new_T_surf_diff, calc_new_T_deep_diff,calc_new_T_surf_notrns, &
                             calc_new_T_deep_notrns,calc_new_T_surf_ekman,calc_new_T_deep_ekman
     use, intrinsic :: iso_fortran_env
-    !**TESTING**!
     use process_output_data
 
 implicit none
@@ -24,8 +26,9 @@ implicit none
 
 !**Mass flux variables**!
 real(real64), dimension(:,:),allocatable :: u_wind,v_wind,tau_PHI,tau_THETA,mass_flux_THETA &
-                                            ,mass_flux_PHI,sv_flow_PHI,sv_flow_THETA
+                                            ,mass_flux_PHI,sv_flow_PHI,sv_flow_THETA,Vert_mass_flux
 real(real64), dimension(:,:,:), allocatable :: M
+real(real64) :: div_m
 
 
 !**Land mask and coordinate variables**!
@@ -46,7 +49,7 @@ real(real64) :: days,time,s_dfsn,s_ekmn,s_notrns
 
 
 
-!**Land Mask allocation and load and coords**!
+!**Land Mask and coordinates allocation and load **!
 allocate(land_mask(N_LATS,N_LONS))
 land_mask = read_file_int(LAND_MASK_DATA,N_LATS,N_LONS)
 
@@ -54,6 +57,7 @@ allocate(lats_data(N_LATS,2),lats(N_LATS,1))
 lats_data = read_file_real(LATS_FILE,N_LATS,2_int64)
 lats(:,1)= lats_data(:,2) ! Second column in lats data file includes the latitude points
 deallocate(lats_data)
+
 !**Calculating surface stresses from u and v wind**!
 allocate(u_wind(N_LATS,N_LONS),v_wind(N_LATS,N_LONS),tau_PHI(N_LATS,N_LONS),tau_THETA(N_LATS,N_LONS))
 
@@ -79,16 +83,23 @@ allocate(sv_flow_PHI(N_LATS,N_LONS),sv_flow_THETA(N_LATS,N_LONS))
 call calculate_flow_sv_PHI(mass_flux_PHI,sv_flow_PHI)
 call calculate_flow_sv_THETA(lats,mass_flux_THETA,sv_flow_THETA)
 
-!**Writing mass flux initial output to files**!
-!call write_file('output_data/sv_flow_PHI_init.dat',sv_flow_PHI,N_LATS,N_LONS)
-!call write_file('output_data/sv_flow_Theta_init.dat',sv_flow_THETA,N_LATS,N_LONS)
 
 allocate(M(2,N_LATS,N_LONS))
 
 M(1,:,:) = mass_flux_THETA(:,:) !THETA = 1
 M(2,:,:) = mass_flux_PHI(:,:) !PHI = 2
 
-deallocate(mass_flux_PHI,mass_flux_THETA,sv_flow_PHI,sv_flow_THETA)
+deallocate(mass_flux_PHI,mass_flux_THETA)
+
+!**Calculating vertical mass flux**!
+allocate(Vert_mass_flux(N_LATS,N_LONS))
+
+do i = 1,N_LATS
+    do j =1,N_LONS
+        call calculate_div_M(i,j,theta,M(2,:,:),M(1,:,:),div_m)
+        Vert_mass_flux(i,j) = div_m
+    end do
+end do
 
 !**Heat flux calculations**!
 allocate(F_net_sw_down(N_LATS,N_LONS),F_lw_down(N_LATS,N_LONS),F_latent_up(N_LATS,N_LONS),F_sensible_up(N_LATS,N_LONS))
@@ -116,23 +127,21 @@ n_times = TIME_STEPS  !Number of time steps, 20 steps = 10 days.
 call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a)
 d_theta = deg_to_rad(DELTA_LAT)
 d_phi = deg_to_rad(DELTA_LON)
-diff_coef = D
-!diff_coef = 1 ! works
-!diff_coef = 250
-
+diff_coef = 0.0
 s_dfsn = DELTA_T*diff_coef/(R_PLANET)**2
 
 
-!!****By this point the only arrays are: T, M, F_a, F_c ,F_net_sw_down,F_lw_down,F_latent_up and F_sensible_up****!!
+!!****By this point the only arrays are: T, M, VERT_mass_flux, sv_flow_PHI ,sv_flow_Theta, F_a,
+!!F_c ,F_net_sw_down,F_lw_down,F_latent_up and F_sensible_up****!!
 
-print*,'Enter version of ulmo (0,1 or 2):'
-read *,version
-!version = 2
-
-
+!**Version Options hard code or ask via read input**!
+!print*,'Enter version of ulmo (0,1 or 2):'
+!read *,version
+version = 2
 
 allocate(T_new(2,N_LATS,N_LONS))
 
+!** TIME STEPPING **!
 do n_step = 1,n_times
 
 
@@ -150,7 +159,7 @@ do n_step = 1,n_times
 
 
 
-                thickness = h_slab(h)
+                call h_slab(h,thickness)
                 s_notrns = DELTA_T/(RHO_WATER*C_V*thickness)
                 s_ekmn = DELTA_T/(R_PLANET*RHO_WATER*thickness)
                 theta = deg_to_rad(lats(i,1))
@@ -186,10 +195,11 @@ do n_step = 1,n_times
 
                             call calc_new_T_surf_diff(T,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,F_c,F_a,theta,T_new)
 
+
                         elseif(h==2) then
 
                             call calc_new_T_deep_diff(T,i,j,h,d_theta,d_phi,s_notrns,s_dfsn,F_c,theta,T_new)
-                            !call calc_new_T_deep_notrns(T,i,j,h,s_notrns,F_c,T_new) ! setting deep to no diffusion
+
                         else
 
                             print*, 'Index h is out of range'
@@ -222,21 +232,20 @@ do n_step = 1,n_times
 
     T(:,:,:) = T_new(:,:,:)
 
-
+    !**Writing outputs to files,(outputs every 100 days)**!
     if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
         days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
         print*, 'Days passed = ', days
-        call process_output(T,upward_Q_flux,time)
     end if
 
     if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
-        call process_output(T,upward_Q_flux,time)
+        call process_output(T,upward_Q_flux,time,sv_flow_PHI,sv_flow_THETA,Vert_mass_flux)
     end if
 
-!    call process_output(T,upward_Q_flux,time)
 end do
 
-
+deallocate(Vert_mass_flux)
+deallocate(sv_flow_PHI,sv_flow_THETA)
 deallocate(T_new)
 deallocate(land_mask,lats)
 deallocate(upward_Q_flux,F_a,F_c)

@@ -3,52 +3,44 @@ module READ_DATA
 use, intrinsic :: iso_fortran_env
 implicit none
 !********************************************************************
-! This module also contains the original subroutine for writing files
+! This module also contains the subroutines for writing files
 !********************************************************************
 public :: read_file_real,read_file_int, write_file
 private
 
 contains
-!******************************
-! Function to read in data real
-!******************************
+!***********************************
+! Function to read in data type real
+!***********************************
 function read_file_real(data_file,rows,cols) result(array)
     character(len=*), intent(in) :: data_file
     integer(int64), intent(in) :: rows,cols
     real(real64), dimension(rows,cols) :: array
     integer(int64) :: lat,lon,iu
 
-
-
     open(newunit=iu,file=data_file,status='old',action='read')
     do lat = 1,rows
-        read(iu,*) (array(lat,lon),lon=1,cols) ! reading in input data file
+        read(iu,*) (array(lat,lon),lon=1,cols)
 
     end do
     close(iu)
 
-!    print*,data_file,'(1,1)', output(1,1) !!check!!
-
 end function read_file_real
-!*****************************
-! Function to read in data int
-!*****************************
+!**********************************
+! Function to read in data type int
+!**********************************
 function read_file_int(data_file,rows,cols) result(array)
     character(len=*), intent(in) :: data_file
     integer(int64), intent(in) :: rows,cols
     integer(int64), dimension(rows,cols) :: array
     integer(int64) :: lat,lon,iu
 
-
-
     open(newunit=iu,file=data_file,status='old',action='read')
     do lat = 1,rows
-        read(iu,*) (array(lat,lon),lon=1,cols) ! reading in input data file
+        read(iu,*) (array(lat,lon),lon=1,cols)
 
     end do
     close(iu)
-
-!    print*,data_file,'(1,1)', output(1,1) !!check!!
 
 end function read_file_int
 !**************************************************************
@@ -67,8 +59,6 @@ subroutine write_file(file_name,array,rows, cols)
     end do
 
     close(iu)
-
-
 
 end subroutine write_file
 
