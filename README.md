@@ -4,24 +4,24 @@ ulmo
 <h4 align="center">
 Model of Ekman heat transport for slab oceans, now in modern Fortran!
 </h4>
-
-Instructions <br />
+Instructions <br />  
 ->Pull the repository <br />
-->Make a new python environment (maybe call it ULMO) <br />
+->Make a new python environment (call it "ulmo") <br />   
 ->Conda install gfortran  <br />
-->To run the code use "Make run" <br />
+->To run the code use "Make run" <br />  
 ->"Make clean" removes complied files  <br />
 ->"Make all" compiles files only  <br />
-->Version propmt after running refers to the heat transport mechanisms enabled <br />
+->Version prompt after running refers to the heat transport mechanisms enabled <br />  
 -> 1 = no transport  <br />
 -> 2 = Diffusion  <br />
--> 3 = Diffusion and Ekman transport<br />
--> Constants such as the Diffusion constant can be changed in the constants.F90 file<br />
--> Examples can befound and run from the examples folder, (these have pre determined versions and are named accordingly) <br />
-IF USING THE FGSL VERSION ONLY:  <br />
+-> 3 = Diffusion and Ekman transport<br />  
+-> Constants such as the Diffusion constant can be changed in the constants.F90 file<br />  
+-> Examples can be found and run from the examples folder, (these have pre determined versions and are named accordingly) <br />  
+IF USING THE FGSL VERSION:  <br />
 ->Make a new python environment  <br />
-->Conda install fgsl  <br />
+->Conda install fgsl and gfortran <br />
 ->Edit make file to compile the correct files e.g ulmo_fgsl.F90 and change the compiler flags <br />
+
 
 
 
@@ -49,4 +49,5 @@ IF USING THE FGSL VERSION ONLY:  <br />
        alt="Contributors">
 </a>
 </p>
+
 
