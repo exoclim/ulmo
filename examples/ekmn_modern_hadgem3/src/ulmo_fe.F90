@@ -127,7 +127,7 @@ n_times = TIME_STEPS  !Number of time steps, 20 steps = 10 days.
 call calculate_F_a(F_net_sw_down,F_lw_down,F_latent_up,F_sensible_up,F_a)
 d_theta = deg_to_rad(DELTA_LAT)
 d_phi = deg_to_rad(DELTA_LON)
-diff_coef = 0.0
+diff_coef = D
 s_dfsn = DELTA_T*diff_coef/(R_PLANET)**2
 
 
@@ -135,9 +135,9 @@ s_dfsn = DELTA_T*diff_coef/(R_PLANET)**2
 !!F_c ,F_net_sw_down,F_lw_down,F_latent_up and F_sensible_up****!!
 
 !**Version Options hard code or ask via read input**!
-print*,'Enter version of ulmo (0,1 or 2):'
-read *,version
-!version = 2
+!print*,'Enter version of ulmo (0,1 or 2):'
+!read *,version
+version = 2
 
 allocate(T_new(2,N_LATS,N_LONS))
 
@@ -236,6 +236,7 @@ do n_step = 1,n_times
     if (mod(time,TIME_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then
         days = T_OFFSET+time/(HOURS_PER_DAY*MINUTES_PER_HOUR*SECONDS_PER_MINUTE)
         print*, 'Days passed = ', days
+        call process_output(T,upward_Q_flux,time,sv_flow_PHI,sv_flow_THETA,Vert_mass_flux)
     end if
 
     if (mod(time,DATA_OUTPUT_FREQ)<TIME_OUTPUT_TOL) then

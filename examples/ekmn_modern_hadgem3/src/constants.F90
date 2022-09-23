@@ -15,21 +15,21 @@ private
   real(real64), parameter,public  :: HEAT_TRANSFER_COEFFICIENT = 3000. ! heat transfer coefficient for water W/m2/K 50-3000
   real(real64), parameter,public  :: RHO_AIR =  1.22 ! air density kg/m3
   real(real64), parameter,public  :: RHO_WATER =  1027 ! km/m3
-  real(real64), parameter,public  :: R_PLANET = 1.12384*6.371e6 ! radius of planet in m (as fraction of Earth radius)
+  real(real64), parameter,public  :: R_PLANET = 6.371e6 ! radius of planet in m (as fraction of Earth radius)
   real(real64), parameter,public  :: EPSI = 0.00001 ! pretty good need to find appropriate value
-  real(real64), parameter,public  :: OMEGA = 6.501e-6 ! angular frequency planet, about its central axis
-!  real(real64), parameter,public  :: OMEGA = 7.272e-5 ! Earth value for omega
+!  real(real64), parameter,public  :: OMEGA = 6.501e-6 ! angular frequency planet, about its central axis
+  real(real64), parameter,public  :: OMEGA = 7.272e-5 ! Earth value for omega
   real(real64), parameter,public  :: SIGMA = 5.67e-8 ! stefan boltzman constant
   real(real64), parameter,public  :: H_S = 50.0 ! thickness of surface layer in m
   real(real64), parameter,public  :: H_D = 150.0 ! thickness of deep layer below
   !real(real64), parameter,public  :: D = 25000.0 ! horizontal diffusion coefficient m2/s
   real(real64),parameter,public   :: D = 250.0 !needs to be this for Diffusion or Ekmn (stability)
-  integer(int64), parameter,public  :: N_LATS = 90 ! number of latitude points
-  integer(int64), parameter,public  :: N_LONS = 144 ! number of longitude points
-!  real(real64), parameter,public  :: LAT_MIN = -89.0
-  real(real64), parameter,public  :: DELTA_LAT = 2.0
-!  real(real64), parameter,public  :: LON_MIN = 1.25
-  real(real64), parameter,public  :: DELTA_LON = 2.5
+  integer(int64), parameter,public  :: N_LATS = 144 ! number of latitude points
+  integer(int64), parameter,public  :: N_LONS = 192 ! number of longitude points
+  real(real64), parameter,public  :: LAT_MIN = -89.0
+  real(real64), parameter,public  :: DELTA_LAT = 1.25
+  real(real64), parameter,public  :: LON_MIN = 1.25
+  real(real64), parameter,public  :: DELTA_LON = 1.875
   real(real64), parameter,public  :: HOURS_PER_DAY = 24.
   real(real64), parameter,public  :: MINUTES_PER_HOUR = 60.
   real(real64), parameter,public  :: SECONDS_PER_MINUTE = 60.
@@ -48,8 +48,7 @@ private
 !***********************
 ! input data file names
 !***********************
-  character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_no_land.dat"
-  !character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/land_mask_day_cont_100_180.dat"
+  character(len=*),parameter,public  :: LAND_MASK_DATA = "input_data/Earth_modern_144_192.dat"
   real(real64)            ,parameter,public  :: MAX_FILE_LINE_SIZE = 4000
   character(len=*),parameter,public  :: SW_FLUX_NET_DOWN_DATA = "input_data/ProCb/surface_net_downward_shortwave_flux.dat"
   character(len=*),parameter,public  :: LW_FLUX_DOWN_DATA = "input_data/ProCb/surface_downwelling_longwave_flux_in_air.dat"
